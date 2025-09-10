@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pedropaulo_cryptos/paginas/carteira_moedas.dart';
+import 'package:pedropaulo_cryptos/pages/carteira_moedas.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

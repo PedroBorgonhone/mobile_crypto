@@ -9,6 +9,9 @@ class CarteiraMoedas extends StatelessWidget{
       appBar: AppBar (
         title: Text('Carteira de Crypto Moedas'),
       ),
+      body: Center(
+        child: Text('Conteúdo da Carteira de Crypto Moedas'),
+      ),
     );
   }
 }
