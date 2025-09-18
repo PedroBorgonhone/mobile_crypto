@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/pages/tela_registro.dart';
 
 class TelaLogin extends StatelessWidget {
   const TelaLogin({super.key});
@@ -6,7 +7,7 @@ class TelaLogin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
+
       appBar: AppBar(
         title: Text('Login'),
         backgroundColor: Color(0xFF0074D9),
@@ -35,6 +36,18 @@ class TelaLogin extends StatelessWidget {
                 // Lógica de login
               },
               child: Text('Entrar'),
+            ),
+            const SizedBox(height: 16.0),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TelaRegistro())
+                  );
+              },
+              child: const Text(
+                'Registrar',
+                style: TextStyle(color: Colors.white),),
             ),
           ],
         ),
