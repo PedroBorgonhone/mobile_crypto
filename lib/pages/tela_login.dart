@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/pages/tela_recuperar_senha.dart';
 import 'package:pedropaulo_cryptos/pages/tela_registro.dart';
 
 class TelaLogin extends StatelessWidget {
@@ -37,7 +38,7 @@ class TelaLogin extends StatelessWidget {
               },
               child: Text('Entrar'),
             ),
-            const SizedBox(height: 16.0),
+            SizedBox(height: 16.0),
             TextButton(
               onPressed: () {
                 Navigator.push(
@@ -45,8 +46,20 @@ class TelaLogin extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => TelaRegistro())
                   );
               },
-              child: const Text(
+              child: Text(
                 'Registrar',
+                style: TextStyle(color: Colors.white),),
+            ),
+            SizedBox(height: 16.0),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TelaRecuperarSenha())
+                  );
+              },
+              child: Text(
+                'Recuperar Senha',
                 style: TextStyle(color: Colors.white),),
             ),
           ],
