@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pedropaulo_cryptos/pages/carteira_moedas.dart';
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -11,8 +11,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.indigo,
+        scaffoldBackgroundColor: Color(0xFF001F3F),
       ),
-      home: const CarteiraMoedas(),
+      home: TelaLogin(),
     );
   }
 }
