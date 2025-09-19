@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/pages/tela_carteira_menu.dart';
+import 'package:pedropaulo_cryptos/pages/tela_noticia.dart';
 
 class TelaMenu extends StatelessWidget {
   const TelaMenu({super.key});
@@ -19,7 +20,10 @@ class TelaMenu extends StatelessWidget {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                // Lógica para a página de notícias
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TelaNoticias()),
+                );
               },
               child: const Text('Notícias'),
             ),

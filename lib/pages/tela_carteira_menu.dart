@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/pages/tela_carteira_acoes.dart';
+import 'package:pedropaulo_cryptos/pages/tela_carteira_moedas.dart';
 
 class TelaCarteira extends StatelessWidget {
   const TelaCarteira({super.key});
@@ -18,14 +20,20 @@ class TelaCarteira extends StatelessWidget {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                // Lógica para ir para a Carteira Crypto
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CarteiraMoedas()),
+                );
               },
               child: const Text('Carteira Crypto'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Lógica para ir para a Carteira de Ações
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TelaCarteiraAcoes()),
+                );
               },
               child: const Text('Carteira de Ações'),
             ),
