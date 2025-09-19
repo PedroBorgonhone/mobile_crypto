@@ -35,7 +35,7 @@ class TelaLogin extends StatelessWidget {
             SizedBox(height: 32.0),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const TelaMenu()),
                   );

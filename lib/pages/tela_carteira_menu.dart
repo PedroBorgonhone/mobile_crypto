@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:pedropaulo_cryptos/pages/tela_carteira_menu.dart';
 
-class TelaMenu extends StatelessWidget {
-  const TelaMenu({super.key});
+class TelaCarteira extends StatelessWidget {
+  const TelaCarteira({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF236bcb),
       appBar: AppBar(
-        title: const Text('Menu Principal'),
+        title: const Text('Minhas Carteiras'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -19,19 +18,16 @@ class TelaMenu extends StatelessWidget {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                // Lógica para a página de notícias
+                // Lógica para ir para a Carteira Crypto
               },
-              child: const Text('Notícias'),
+              child: const Text('Carteira Crypto'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TelaCarteira()),
-                );
+                // Lógica para ir para a Carteira de Ações
               },
-              child: const Text('Acessar Carteira'),
+              child: const Text('Carteira de Ações'),
             ),
           ],
         ),
