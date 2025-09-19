@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
 import 'package:pedropaulo_cryptos/pages/tela_recuperar_senha.dart';
 import 'package:pedropaulo_cryptos/pages/tela_registro.dart';
 
@@ -34,8 +35,11 @@ class TelaLogin extends StatelessWidget {
             SizedBox(height: 32.0),
             ElevatedButton(
               onPressed: () {
-                // Lógica de login
-              },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TelaMenu()),
+                  );
+                },
               child: Text('Entrar'),
             ),
             SizedBox(height: 16.0),
