@@ -10,8 +10,7 @@ class MyApp extends StatelessWidget {
       title: 'Cypto Paulo e Pedro',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: Color(0xFF001F3F),
+        scaffoldBackgroundColor: Color(0xFF074973),
       ),
       home: TelaLogin(),
     );

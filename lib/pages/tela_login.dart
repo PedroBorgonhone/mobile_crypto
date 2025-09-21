@@ -10,12 +10,6 @@ class TelaLogin extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
 
-      appBar: AppBar(
-        title: Text('Login'),
-        backgroundColor: Color(0xFF0074D9),
-        elevation: 10.0,
-      ),
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -31,16 +25,6 @@ class TelaLogin extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: 'Senha',
               ),
-            ),
-            SizedBox(height: 32.0),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TelaMenu()),
-                  );
-                },
-              child: Text('Entrar'),
             ),
             SizedBox(height: 16.0),
             TextButton(
@@ -65,6 +49,16 @@ class TelaLogin extends StatelessWidget {
               child: Text(
                 'Recuperar Senha',
                 style: TextStyle(color: Colors.white),),
+            ),
+            SizedBox(height: 32.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TelaMenu()),
+                  );
+                },
+              child: Text('Entrar'),
             ),
           ],
         ),
