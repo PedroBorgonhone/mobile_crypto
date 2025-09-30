@@ -10,7 +10,12 @@ class TelaLogin extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
 
-      body: Padding(
+      body: Container(
+        color: Color(0xFF307B8C),
+        height: 600,
+        width: double.infinity,
+        margin: EdgeInsets.only(top: 100, left: 30, right: 30, bottom: 100),
+
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
