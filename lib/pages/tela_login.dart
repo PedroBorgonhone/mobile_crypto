@@ -11,49 +11,50 @@ class TelaLogin extends StatelessWidget {
     return Scaffold(
 
       body: Container(
-        color: Color(0xFF307B8C),
+        color: Color(0xFF074973),
         height: 600,
         width: double.infinity,
         margin: EdgeInsets.only(top: 100, left: 30, right: 30, bottom: 100),
 
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+        padding: const EdgeInsets.all(30),
+        child: 
+          Column(
           children: <Widget>[
+
+            // Texto de Bem Vindo
+
+            Text('Bem Vindo!',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFF2EBDF),
+              ),
+            ),
+            SizedBox(height: 6),
+            Text('Faça o login para continuar',
+              style: TextStyle(
+                fontSize: 18,
+                color: Color(0xFFF2EBDF),
+              ),
+            ),
+
+            //Campos de Usuário
+
+            SizedBox(height: 26),
             TextField(
               decoration: InputDecoration(
                 labelText: 'Usuário',
               ),
             ),
-            SizedBox(height: 16.0),
+
+            // Campo de Senha
+
+            SizedBox(height: 16),
             TextField(
               obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Senha',
               ),
-            ),
-            SizedBox(height: 16.0),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TelaRegistro())
-                  );
-              },
-              child: Text(
-                'Registrar',
-                style: TextStyle(color: Colors.white),),
-            ),
-            SizedBox(height: 16.0),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TelaRecuperarSenha())
-                  );
-              },
-              child: Text(
-                'Recuperar Senha',
-                style: TextStyle(color: Colors.white),),
             ),
             SizedBox(height: 32.0),
             ElevatedButton(
@@ -64,6 +65,45 @@ class TelaLogin extends StatelessWidget {
                   );
                 },
               child: Text('Entrar'),
+
+            //Botão de Recuperar Senha
+
+            ),
+            SizedBox(height: 26),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TelaRecuperarSenha())
+                  );
+              },
+              child: Text(
+                'Esqueceu a Senha?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFFF2EBDF)),),
+            ),
+
+            //Botão de Registro
+
+            SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TelaRegistro())
+                  );
+              },
+              child: Text(
+                'Não possui uma conta? Registre-se',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: Color(0xFFF2EBDF)
+                ),
+              ),
             ),
           ],
         ),
