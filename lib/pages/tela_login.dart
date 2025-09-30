@@ -44,6 +44,10 @@ class TelaLogin extends StatelessWidget {
             TextField(
               decoration: InputDecoration(
                 labelText: 'Usuário',
+                labelStyle: TextStyle(
+                  color: Color(0xFFF2EBDF),
+                ),
+                border: OutlineInputBorder(),
               ),
             ),
 
@@ -54,6 +58,10 @@ class TelaLogin extends StatelessWidget {
               obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Senha',
+                labelStyle: TextStyle(
+                  color: Color(0xFFF2EBDF),
+                ),
+                border: OutlineInputBorder(),
               ),
             ),
 
