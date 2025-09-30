@@ -38,7 +38,7 @@ class TelaLogin extends StatelessWidget {
               ),
             ),
 
-            //Campos de Usuário
+            // Campos de Usuário
 
             SizedBox(height: 26),
             TextField(
@@ -56,19 +56,38 @@ class TelaLogin extends StatelessWidget {
                 labelText: 'Senha',
               ),
             ),
-            SizedBox(height: 32.0),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TelaMenu()),
+
+            // Botão de Entrar
+
+            SizedBox(height: 26),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TelaMenu()),
                   );
                 },
-              child: Text('Entrar'),
-
-            //Botão de Recuperar Senha
-
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF307B8C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Entrar',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFFF2EBDF),
+                  ),
+                ),
+              ),
             ),
+
+            // Botão de Recuperar Senha
+
             SizedBox(height: 26),
             TextButton(
               onPressed: () {
@@ -85,7 +104,7 @@ class TelaLogin extends StatelessWidget {
                   color: Color(0xFFF2EBDF)),),
             ),
 
-            //Botão de Registro
+            // Botão de Registro
 
             SizedBox(height: 10),
             TextButton(
