@@ -22,15 +22,15 @@ class _TelaMenuState extends State<TelaMenu> {
 
     switch (prazo) {
       case PrazoIndicador.curto:
-        text = 'CURTO PRAZO';
+        text = 'Curto prazo';
         color = Colors.orange.shade700;
         break;
       case PrazoIndicador.medio:
-        text = 'MÉDIO PRAZO';
+        text = 'Médio prazo';
         color = Colors.blue.shade700;
         break;
       case PrazoIndicador.longo:
-        text = 'LONGO PRAZO';
+        text = 'Longo prazo';
         color = Colors.green.shade700;
         break;
     }
