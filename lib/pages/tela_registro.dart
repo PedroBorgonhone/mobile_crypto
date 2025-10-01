@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
 class TelaRegistro extends StatelessWidget {
   const TelaRegistro({super.key});
@@ -7,53 +7,136 @@ class TelaRegistro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF236bcb),
-      appBar: AppBar(
-        title: const Text('Registro'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Nome',
-                labelStyle: TextStyle(color: Colors.white)
-              ),
+      body: Center( // Centraliza o Container na tela
+        child: Container(
+          color: const Color(0xFF165873),
+          width: double.infinity,
+          margin: const EdgeInsets.all(30),
+          padding: const EdgeInsets.all(30),
+
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+
+                // Texto de Registro
+
+                const Text('Registrar-se',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFF2EBDF),
+                  ),
+                ),
+
+                // Nome de Usuário
+
+                const SizedBox(height: 26),
+                TextField(
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
+                  decoration: InputDecoration(
+                    labelText: 'Nome de Usuário',
+                    labelStyle: const TextStyle(
+                      color: Color(0xFFF2EBDF),
+                    ),
+                    border: OutlineInputBorder()
+                  ),
+                ),
+
+                // Email do Usuário
+
+                const SizedBox(height: 26),
+                TextField(
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: const TextStyle(
+                      color: Color(0xFFF2EBDF),
+                    ),
+                    border: OutlineInputBorder()
+                  ),
+                ),
+
+                // Senha do Usuário
+
+                const SizedBox(height: 26),
+                TextField(
+                  obscureText: true,
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    labelStyle: const TextStyle(
+                      color: Color(0xFFF2EBDF),
+                    ),
+                    border: OutlineInputBorder()
+                  ),
+                ),
+
+                // Confirmar Senha do Usuário
+
+                const SizedBox(height: 26),
+                TextField(
+                  obscureText: true,
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
+                  decoration: InputDecoration(
+                    labelText: 'Confirmar Senha',
+                    labelStyle: const TextStyle(
+                      color: Color(0xFFF2EBDF),
+                    ),
+                    border: OutlineInputBorder()
+                  ),
+                ),
+
+                // Botão de Registro
+
+                const SizedBox(height: 32.0),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TelaLogin()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF307B8C),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Registrar-se',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Color(0xFFF2EBDF),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Botão de Cancelar
+                
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Cancelar',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFF2EBDF),
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0xFFF2EBDF),
+                    ),
+                  ),
+                ),
+              ]
             ),
-            const SizedBox(height: 16.0),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Email',
-                labelStyle: TextStyle(color: Colors.white)
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Senha',
-                labelStyle: TextStyle(color: Colors.white)
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Confirmar Senha',
-                labelStyle: TextStyle(color: Colors.white)
-              ),
-            ),
-            const SizedBox(height: 32.0),
-            ElevatedButton(
-              onPressed: () {
-                // Lógica de registro
-              },
-              child: const Text('Registrar'),
-            ),
-          ],
+          ),
         ),
       ),
     );
