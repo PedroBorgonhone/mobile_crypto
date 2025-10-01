@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
+import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
 
 class TelaTrocarSenha extends StatelessWidget {
   const TelaTrocarSenha({super.key});
@@ -58,11 +60,51 @@ class TelaTrocarSenha extends StatelessWidget {
                 // Botão Trocar Senha
 
                 const SizedBox(height: 32.0),
-                ElevatedButton(
+                SizedBox( 
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TelaMenu()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF307B8C),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Trocar Senha',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Color(0xFFF2EBDF),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Botão de Cancelar
+                
+                const SizedBox(height: 20),
+                TextButton(
                   onPressed: () {
-                    // Lógica para trocar a senha
-                  },
-                  child: const Text('Trocar Senha'),
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TelaLogin()),
+                      );
+                    },
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFF2EBDF),
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0xFFF2EBDF),
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -45,6 +45,7 @@ class TelaRecuperarSenha extends StatelessWidget {
 
                 const SizedBox(height: 32.0),
                 TextField(
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: TextStyle(color: Colors.white),

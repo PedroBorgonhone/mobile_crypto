@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pedropaulo_cryptos/pages/tela_login.dart';
+import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
 
 class TelaRegistro extends StatelessWidget {
   const TelaRegistro({super.key});
@@ -37,9 +37,7 @@ class TelaRegistro extends StatelessWidget {
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Nome de Usuário',
-                    labelStyle: const TextStyle(
-                      color: Color(0xFFF2EBDF),
-                    ),
+                    labelStyle: const TextStyle(color: Color(0xFFF2EBDF),),
                     border: OutlineInputBorder()
                   ),
                 ),
@@ -94,7 +92,7 @@ class TelaRegistro extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const TelaLogin()),
+                        MaterialPageRoute(builder: (context) => const TelaMenu()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
