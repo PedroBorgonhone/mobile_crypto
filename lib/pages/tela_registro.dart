@@ -7,7 +7,8 @@ class TelaRegistro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center( // Centraliza o Container na tela
+
+      body: Center(
         child: Container(
           color: const Color(0xFF165873),
           width: double.infinity,
@@ -16,7 +17,7 @@ class TelaRegistro extends StatelessWidget {
 
           child: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
 
                 // Texto de Registro
@@ -65,9 +66,7 @@ class TelaRegistro extends StatelessWidget {
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Senha',
-                    labelStyle: const TextStyle(
-                      color: Color(0xFFF2EBDF),
-                    ),
+                    labelStyle: const TextStyle(color: Color(0xFFF2EBDF),),
                     border: OutlineInputBorder()
                   ),
                 ),
@@ -80,9 +79,7 @@ class TelaRegistro extends StatelessWidget {
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Confirmar Senha',
-                    labelStyle: const TextStyle(
-                      color: Color(0xFFF2EBDF),
-                    ),
+                    labelStyle: const TextStyle(color: Color(0xFFF2EBDF),),
                     border: OutlineInputBorder()
                   ),
                 ),
@@ -125,7 +122,6 @@ class TelaRegistro extends StatelessWidget {
                   },
                   child: const Text(
                     'Cancelar',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFFF2EBDF),

@@ -19,6 +19,7 @@ class TelaLogin extends StatelessWidget {
 
           child: SingleChildScrollView(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
 
                 // Texto de Bem Vindo
@@ -106,7 +107,6 @@ class TelaLogin extends StatelessWidget {
                   },
                   child: Text(
                     'Esqueceu a Senha?',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFFF2EBDF),
@@ -128,7 +128,6 @@ class TelaLogin extends StatelessWidget {
                   },
                   child: Text(
                     'Não possui uma conta? Registre-se',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFFF2EBDF),
