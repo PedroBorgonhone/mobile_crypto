@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
 import 'package:pedropaulo_cryptos/pages/tela_recuperar_senha.dart';
 import 'package:pedropaulo_cryptos/pages/tela_registro.dart';
-import 'package:pedropaulo_cryptos/repositories/user_repository.dart';
+import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart';
 
 void showCustomSnackbar(BuildContext context, String message, {bool isError = false}) {
   ScaffoldMessenger.of(context).showSnackBar(

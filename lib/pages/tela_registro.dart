@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pedropaulo_cryptos/repositories/user_repository.dart';
+import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart';
 import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
 class TelaRegistro extends StatefulWidget {
