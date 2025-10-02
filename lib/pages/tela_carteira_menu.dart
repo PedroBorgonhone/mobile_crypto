@@ -5,6 +5,7 @@ import 'package:pedropaulo_cryptos/models/acao.dart';
 import 'package:pedropaulo_cryptos/models/moeda.dart';
 import 'package:pedropaulo_cryptos/repositories/acao_repositorio.dart';
 import 'package:pedropaulo_cryptos/repositories/moeda_repositorio.dart';
+import 'package:pedropaulo_cryptos/repositories/carteira_repositorio.dart';
 
 class TelaCarteira extends StatefulWidget {
   const TelaCarteira({super.key});
@@ -16,22 +17,13 @@ class TelaCarteira extends StatefulWidget {
 class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
-  // Carteira de Criptomoedas do usuário
-  List<Moeda> _minhaCarteiraCripto = [];
   final List<Moeda> _moedasDisponiveis = MoedaRepositorio.tabela;
-  
-  // Carteira de Ações do usuário
-  List<Acao> _minhaCarteiraAcoes = [];
   final List<Acao> _acoesDisponiveis = AcaoRepositorio.tabela;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    // Preenche as carteiras com alguns exemplos iniciais
-    _minhaCarteiraCripto = _moedasDisponiveis.sublist(0, 3);
-    _minhaCarteiraAcoes = _acoesDisponiveis.sublist(0, 2);
   }
   
   @override
@@ -40,102 +32,171 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
     super.dispose();
   }
 
-  // --- Funções para Criptomoedas ---
   void _removerMoeda(Moeda moeda) {
     setState(() {
-      _minhaCarteiraCripto.remove(moeda);
+      CarteiraRepositorio.carteiraCripto.remove(moeda);
     });
   }
 
   void _mostrarDialogAdicionarMoeda() {
+    // AJUSTE: Variáveis movidas para dentro do showDialog para garantir o escopo correto
+    final searchController = TextEditingController();
+    List<Moeda> moedasFiltradas = List.from(_moedasDisponiveis);
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Adicionar Criptomoeda'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: _moedasDisponiveis.length,
-              itemBuilder: (context, index) {
-                final moeda = _moedasDisponiveis[index];
-                final jaPossui = _minhaCarteiraCripto.any((m) => m.sigla == moeda.sigla);
-                
-                return ListTile(
-                  leading: Image.asset(moeda.icone, width: 40),
-                  title: Text(moeda.nome),
-                  subtitle: Text(moeda.sigla),
-                  trailing: jaPossui
-                      ? const Icon(Icons.check, color: Colors.green)
-                      : const Icon(Icons.add),
-                  onTap: () {
-                    if (!jaPossui) {
-                      setState(() {
-                        _minhaCarteiraCripto.add(moeda);
-                      });
-                    }
-                    Navigator.of(context).pop();
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setStateInDialog) {
+            void filtrar(String query) {
+              setStateInDialog(() {
+                if (query.isEmpty) {
+                  moedasFiltradas = List.from(_moedasDisponiveis);
+                } else {
+                  moedasFiltradas = _moedasDisponiveis.where((moeda) {
+                    return moeda.nome.toLowerCase().contains(query.toLowerCase()) ||
+                           moeda.sigla.toLowerCase().contains(query.toLowerCase());
+                  }).toList();
+                }
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('Adicionar Criptomoeda'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: filtrar,
+                      autofocus: true, // Melhora a experiência do usuário
+                      decoration: const InputDecoration(
+                        labelText: 'Pesquisar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: moedasFiltradas.length,
+                        itemBuilder: (context, index) {
+                          final moeda = moedasFiltradas[index];
+                          final jaPossui = CarteiraRepositorio.carteiraCripto.any((m) => m.sigla == moeda.sigla);
+                          
+                          return ListTile(
+                            leading: Image.asset(moeda.icone, width: 40),
+                            title: Text(moeda.nome),
+                            subtitle: Text(moeda.sigla),
+                            trailing: jaPossui ? const Icon(Icons.check, color: Colors.green) : const Icon(Icons.add),
+                            onTap: () {
+                              if (!jaPossui) {
+                                setState(() {
+                                  CarteiraRepositorio.carteiraCripto.add(moeda);
+                                });
+                              }
+                              Navigator.of(context).pop();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  // --- Funções para Ações ---
   void _removerAcao(Acao acao) {
     setState(() {
-      _minhaCarteiraAcoes.remove(acao);
+      CarteiraRepositorio.carteiraAcoes.remove(acao);
     });
   }
 
   void _mostrarDialogAdicionarAcao() {
+    final searchController = TextEditingController();
+    List<Acao> acoesFiltradas = List.from(_acoesDisponiveis);
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Adicionar Ação'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: _acoesDisponiveis.length,
-              itemBuilder: (context, index) {
-                final acao = _acoesDisponiveis[index];
-                final jaPossui = _minhaCarteiraAcoes.any((a) => a.sigla == acao.sigla);
-                
-                return ListTile(
-                  title: Text(acao.nome),
-                  subtitle: Text(acao.sigla),
-                  trailing: jaPossui
-                      ? const Icon(Icons.check, color: Colors.green)
-                      : const Icon(Icons.add),
-                  onTap: () {
-                    if (!jaPossui) {
-                      setState(() {
-                        _minhaCarteiraAcoes.add(acao);
-                      });
-                    }
-                    Navigator.of(context).pop();
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setStateInDialog) {
+            void filtrar(String query) {
+              setStateInDialog(() {
+                if (query.isEmpty) {
+                  acoesFiltradas = List.from(_acoesDisponiveis);
+                } else {
+                  acoesFiltradas = _acoesDisponiveis.where((acao) {
+                    return acao.nome.toLowerCase().contains(query.toLowerCase()) ||
+                           acao.sigla.toLowerCase().contains(query.toLowerCase());
+                  }).toList();
+                }
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('Adicionar Ação'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: filtrar,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Pesquisar',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: acoesFiltradas.length,
+                        itemBuilder: (context, index) {
+                          final acao = acoesFiltradas[index];
+                          final jaPossui = CarteiraRepositorio.carteiraAcoes.any((a) => a.sigla == acao.sigla);
+                          
+                          return ListTile(
+                            title: Text(acao.nome),
+                            subtitle: Text(acao.sigla),
+                            trailing: jaPossui ? const Icon(Icons.check, color: Colors.green) : const Icon(Icons.add),
+                            onTap: () {
+                              if (!jaPossui) {
+                                setState(() {
+                                  CarteiraRepositorio.carteiraAcoes.add(acao);
+                                });
+                              }
+                              Navigator.of(context).pop();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -164,17 +225,13 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Conteúdo da Aba de Criptomoedas
           _buildCarteiraCripto(),
-          
-          // Conteúdo da Aba de Ações
           _buildCarteiraAcoes(),
         ],
       ),
     );
   }
 
-  // --- Widgets de Construção de UI ---
   Widget _buildCarteiraCripto() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -201,10 +258,10 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
           const SizedBox(height: 10),
           Expanded(
             child: ListView.separated(
-              itemCount: _minhaCarteiraCripto.length,
+              itemCount: CarteiraRepositorio.carteiraCripto.length,
               separatorBuilder: (_, __) => const Divider(color: Colors.transparent, height: 8),
               itemBuilder: (context, index) {
-                final moeda = _minhaCarteiraCripto[index];
+                final moeda = CarteiraRepositorio.carteiraCripto[index];
                 return Card(
                   color: const Color(0xFF003366),
                   child: ListTile(
@@ -263,10 +320,10 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
           const SizedBox(height: 10),
           Expanded(
             child: ListView.separated(
-              itemCount: _minhaCarteiraAcoes.length,
+              itemCount: CarteiraRepositorio.carteiraAcoes.length,
               separatorBuilder: (_, __) => const Divider(color: Colors.transparent, height: 8),
               itemBuilder: (context, index) {
-                final acao = _minhaCarteiraAcoes[index];
+                final acao = CarteiraRepositorio.carteiraAcoes[index];
                 return Card(
                   color: const Color(0xFF003366),
                   child: ListTile(
