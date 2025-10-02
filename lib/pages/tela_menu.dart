@@ -5,6 +5,7 @@ import 'package:pedropaulo_cryptos/models/noticia.dart';
 import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 import 'package:pedropaulo_cryptos/repositories/noticia_repositorio.dart';
 import 'package:pedropaulo_cryptos/pages/tela_carteira_menu.dart';
+import 'package:pedropaulo_cryptos/pages/tela_perfil.dart'; // Import da tela de perfil
 
 class TelaMenu extends StatefulWidget {
   const TelaMenu({super.key});
@@ -14,7 +15,77 @@ class TelaMenu extends StatefulWidget {
 }
 
 class _TelaMenuState extends State<TelaMenu> {
-  final List<Noticia> tabela = NoticiaRepositorio.tabela;
+  final _searchController = TextEditingController();
+  List<Noticia> _noticiasExibidas = [];
+  final List<Noticia> _listaOriginal = NoticiaRepositorio.tabela;
+
+  @override
+  void initState() {
+    super.initState();
+    _noticiasExibidas = _listaOriginal;
+    _searchController.addListener(_filtrarNoticias);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_filtrarNoticias);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filtrarNoticias() {
+    final query = _searchController.text.toLowerCase();
+    
+    setState(() {
+      if (query.isEmpty) {
+        _noticiasExibidas = _listaOriginal;
+      } else {
+        _noticiasExibidas = _listaOriginal.where((noticia) {
+          final tituloLower = noticia.titulo.toLowerCase();
+          final subtituloLower = noticia.subtitulo.toLowerCase();
+          final conteudoLower = noticia.conteudo.toLowerCase();
+          return tituloLower.contains(query) || 
+                 subtituloLower.contains(query) ||
+                 conteudoLower.contains(query);
+        }).toList();
+      }
+    });
+  }
+
+  void _showDetailsDialog(Noticia noticia) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF003366),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Text(
+            noticia.titulo,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              noticia.conteudo,
+              style: const TextStyle(color: Colors.white70, height: 1.5),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'Fechar',
+                style: TextStyle(color: Color(0xFF90CAF9), fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Widget _buildPrazoChip(PrazoIndicador prazo) {
     String text;
@@ -65,7 +136,7 @@ class _TelaMenuState extends State<TelaMenu> {
           TextButton(
             child: const Text('Carteira'),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white, 
+              foregroundColor: Colors.white,
               textStyle: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -78,21 +149,25 @@ class _TelaMenuState extends State<TelaMenu> {
               );
             },
           ),
-
           IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: 'Perfil do Usuário',
+            // AJUSTE FINAL: Corrigindo a navegação
             onPressed: () {
-              print('Ícone de Perfil clicado!');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TelaPerfil()),
+              );
             },
           ),
         ],
       ),
-      body: Padding( 
+      body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: <Widget>[
             TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Pesquisar notícias...',
                 hintStyle: const TextStyle(color: Colors.white70),
@@ -107,13 +182,12 @@ class _TelaMenuState extends State<TelaMenu> {
               style: const TextStyle(color: Colors.white),
             ),
             const SizedBox(height: 24),
-
             Expanded(
               child: ListView.separated(
-                itemCount: tabela.length,
+                itemCount: _noticiasExibidas.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final noticia = tabela[index];
+                  final noticia = _noticiasExibidas[index];
                   return Card(
                     elevation: 4.0,
                     color: const Color(0xFF003366),
@@ -124,7 +198,7 @@ class _TelaMenuState extends State<TelaMenu> {
                     child: InkWell(
                       splashColor: Colors.blue.withAlpha(50),
                       onTap: () {
-                        print("Clicou em: ${noticia.titulo}");
+                        _showDetailsDialog(noticia);
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -134,33 +208,29 @@ class _TelaMenuState extends State<TelaMenu> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    noticia.fonte.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Color(0xFF90CAF9),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.1,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Text(
-                                          noticia.titulo,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                      Text(
+                                        noticia.fonte.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Color(0xFF90CAF9),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.1,
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       _buildPrazoChip(noticia.prazo),
                                     ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    noticia.titulo,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
