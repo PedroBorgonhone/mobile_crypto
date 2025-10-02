@@ -1,13 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:pedropaulo_cryptos/repositories/user_repository.dart';
 import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
-class TelaRegistro extends StatelessWidget {
+class TelaRegistro extends StatefulWidget {
   const TelaRegistro({super.key});
+
+  @override
+  State<TelaRegistro> createState() => _TelaRegistroState();
+}
+
+class _TelaRegistroState extends State<TelaRegistro> {
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _userRepository = UsuarioRepositorio();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _register() {
+    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      showCustomSnackbar(context, 'Por favor, preencha todos os campos.', isError: true);
+      return;
+    }
+    if (password != confirmPassword) {
+      showCustomSnackbar(context, 'As senhas não coincidem.', isError: true);
+      return;
+    }
+    if (password.length < 3) {
+      showCustomSnackbar(context, 'A senha deve ter pelo menos 3 caracteres (apenas para demonstração).', isError: true);
+      return;
+    }
+
+    final success = _userRepository.registrarUsuario(
+      usuario: username,
+      email: email,
+      senha: password,
+    );
+
+    if (success) {
+      showCustomSnackbar(context, 'Registro bem-sucedido! Faça login agora.');
+      Navigator.pop(context);
+    } else {
+      showCustomSnackbar(context, 'Falha no registro: Usuário ou E-mail já existe.', isError: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center( // Centraliza o Container na tela
+
+      body: Center(
         child: Container(
           color: const Color(0xFF165873),
           width: double.infinity,
@@ -16,7 +71,7 @@ class TelaRegistro extends StatelessWidget {
 
           child: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
 
                 // Texto de Registro
@@ -33,12 +88,11 @@ class TelaRegistro extends StatelessWidget {
 
                 const SizedBox(height: 26),
                 TextField(
+                  controller: _usernameController,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Nome de Usuário',
-                    labelStyle: const TextStyle(
-                      color: Color(0xFFF2EBDF),
-                    ),
+                    labelStyle: const TextStyle(color: Color(0xFFF2EBDF),),
                     border: OutlineInputBorder()
                   ),
                 ),
@@ -47,6 +101,7 @@ class TelaRegistro extends StatelessWidget {
 
                 const SizedBox(height: 26),
                 TextField(
+                  controller: _emailController,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -61,13 +116,12 @@ class TelaRegistro extends StatelessWidget {
 
                 const SizedBox(height: 26),
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Senha',
-                    labelStyle: const TextStyle(
-                      color: Color(0xFFF2EBDF),
-                    ),
+                    labelStyle: const TextStyle(color: Color(0xFFF2EBDF),),
                     border: OutlineInputBorder()
                   ),
                 ),
@@ -76,13 +130,12 @@ class TelaRegistro extends StatelessWidget {
 
                 const SizedBox(height: 26),
                 TextField(
+                  controller: _confirmPasswordController,
                   obscureText: true,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Confirmar Senha',
-                    labelStyle: const TextStyle(
-                      color: Color(0xFFF2EBDF),
-                    ),
+                    labelStyle: const TextStyle(color: Color(0xFFF2EBDF),),
                     border: OutlineInputBorder()
                   ),
                 ),
@@ -94,12 +147,7 @@ class TelaRegistro extends StatelessWidget {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const TelaLogin()),
-                      );
-                    },
+                    onPressed: _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF307B8C),
                       shape: RoundedRectangleBorder(
@@ -125,7 +173,6 @@ class TelaRegistro extends StatelessWidget {
                   },
                   child: const Text(
                     'Cancelar',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFFF2EBDF),

@@ -2,9 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
 import 'package:pedropaulo_cryptos/pages/tela_recuperar_senha.dart';
 import 'package:pedropaulo_cryptos/pages/tela_registro.dart';
+import 'package:pedropaulo_cryptos/repositories/user_repository.dart';
 
-class TelaLogin extends StatelessWidget {
+void showCustomSnackbar(BuildContext context, String message, {bool isError = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? Colors.red.shade700 : const Color(0xFF307B8C),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
+
+class TelaLogin extends StatefulWidget {
   const TelaLogin({super.key});
+
+  @override
+  State<TelaLogin> createState() => _TelaLoginState();
+}
+
+class _TelaLoginState extends State<TelaLogin> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _userRepository = UsuarioRepositorio();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _login() {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      showCustomSnackbar(context, 'Por favor, preencha todos os campos.', isError: true);
+      return;
+    }
+
+    final user = _userRepository.login(usuario: username, senha: password);
+
+    if (user != null) {
+      showCustomSnackbar(context, 'Login bem-sucedido! Bem-vindo, ${user.usuario}.');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const TelaMenu()),
+      );
+    } else {
+      showCustomSnackbar(context, 'Usuário ou senha inválidos.', isError: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +69,7 @@ class TelaLogin extends StatelessWidget {
 
           child: SingleChildScrollView(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
 
                 // Texto de Bem Vindo
@@ -42,12 +93,14 @@ class TelaLogin extends StatelessWidget {
 
                 SizedBox(height: 26),
                 TextField(
+                  controller: _usernameController,
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
+                    border: OutlineInputBorder(),
                     labelText: 'Usuário',
                     labelStyle: TextStyle(
                       color: Color(0xFFF2EBDF),
                     ),
-                    border: OutlineInputBorder(),
                   ),
                 ),
 
@@ -55,13 +108,15 @@ class TelaLogin extends StatelessWidget {
 
                 SizedBox(height: 16),
                 TextField(
+                  controller: _passwordController,
                   obscureText: true,
+                  style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
+                    border: OutlineInputBorder(),
                     labelText: 'Senha',
                     labelStyle: TextStyle(
                       color: Color(0xFFF2EBDF),
                     ),
-                    border: OutlineInputBorder(),
                   ),
                 ),
 
@@ -72,12 +127,7 @@ class TelaLogin extends StatelessWidget {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const TelaMenu()),
-                      );
-                    },
+                    onPressed: _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF307B8C),
                       shape: RoundedRectangleBorder(
@@ -106,7 +156,6 @@ class TelaLogin extends StatelessWidget {
                   },
                   child: Text(
                     'Esqueceu a Senha?',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFFF2EBDF),
@@ -128,14 +177,13 @@ class TelaLogin extends StatelessWidget {
                   },
                   child: Text(
                     'Não possui uma conta? Registre-se',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFFF2EBDF),
                       decoration: TextDecoration.underline,
                       decorationColor: Color(0xFFF2EBDF),
                     ),
-                  ),
+                  ),                  
                 ),
               ],
             ),

@@ -1,9 +1,11 @@
 class Usuario {
-  String nome;
-  String email;
+  final String usuario;
+  final String email;
+  final String senha;
 
   Usuario({
-    required this.nome,
+    required this.usuario,
     required this.email,
+    required this.senha,
   });
 }
