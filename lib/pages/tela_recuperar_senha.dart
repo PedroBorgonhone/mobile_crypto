@@ -1,8 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/pages/tela_trocar_senha.dart';
+import 'package:pedropaulo_cryptos/repositories/user_repository.dart';
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
-class TelaRecuperarSenha extends StatelessWidget {
+class TelaRecuperarSenha extends StatefulWidget {
   const TelaRecuperarSenha({super.key});
+
+  @override
+  State<TelaRecuperarSenha> createState() => _TelaRecuperarSenhaState();
+}
+
+class _TelaRecuperarSenhaState extends State<TelaRecuperarSenha> {
+  final _emailController = TextEditingController();
+  final _userRepository = UsuarioRepositorio();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _recoverPassword() {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      showCustomSnackbar(context, 'Por favor, insira seu e-mail.', isError: true);
+      return;
+    }
+
+    final user = _userRepository.encontraUsuario(email);
+
+    if (user != null) {
+      showCustomSnackbar(context, 'E-mail encontrado! Redirecionando para a troca de senha.');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TelaTrocarSenha(userEmail: email),
+        ),
+      );
+    } else {
+      showCustomSnackbar(context, 'E-mail não encontrado no sistema.', isError: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +84,7 @@ class TelaRecuperarSenha extends StatelessWidget {
 
                 const SizedBox(height: 32.0),
                 TextField(
+                  controller: _emailController,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -57,12 +97,7 @@ class TelaRecuperarSenha extends StatelessWidget {
 
                 const SizedBox(height: 32.0),
                 ElevatedButton(
-                  onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const TelaTrocarSenha()),
-                      );
-                    },
+                  onPressed: _recoverPassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF307B8C),
                     shape: RoundedRectangleBorder(
@@ -95,7 +130,6 @@ class TelaRecuperarSenha extends StatelessWidget {
                     ),
                   ),
                 ),
-
               ],
             ),
           )

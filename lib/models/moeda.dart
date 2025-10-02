@@ -1,8 +1,8 @@
 class Moeda {
-  String icone;
-  String nome;
-  String sigla;
-  double preco;
+  final String icone;
+  final String nome;
+  final String sigla;
+  final double preco;
 
   Moeda({
     required this.icone,
