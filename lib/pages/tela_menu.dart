@@ -1,11 +1,8 @@
-// lib/pages/tela_menu.dart
-
 import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/models/noticia.dart';
 import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 import 'package:pedropaulo_cryptos/repositories/noticia_repositorio.dart';
 import 'package:pedropaulo_cryptos/pages/tela_carteira_menu.dart';
-import 'package:pedropaulo_cryptos/pages/tela_perfil.dart'; // Import da tela de perfil
 
 class TelaMenu extends StatefulWidget {
   const TelaMenu({super.key});
@@ -154,10 +151,7 @@ class _TelaMenuState extends State<TelaMenu> {
             tooltip: 'Perfil do Usuário',
             // AJUSTE FINAL: Corrigindo a navegação
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TelaPerfil()),
-              );
+              print('Ícone de Perfil clicado!');
             },
           ),
         ],
