@@ -18,6 +18,11 @@ class UsuarioRepositorio {
 
   final Map<String, Usuario> _usuarios = {};
 
+  // Usuario Logado
+
+  Usuario? _usuarioLogado;
+  Usuario? get usuarioLogado => _usuarioLogado;
+
   // Função Registrar
 
   bool registrarUsuario({
@@ -50,9 +55,50 @@ class UsuarioRepositorio {
   }) {
     final usuarioAux = _usuarios[usuario];
     if (usuarioAux != null && usuarioAux.senha == senha) {
+      _usuarioLogado = usuarioAux;
       return usuarioAux;
     }
     return null;
+  }
+
+  // Função atualizar
+
+  Usuario? atualizarUsuario({
+    required String usuarioAntigo,
+    required String novoUsuario,
+    required String novoEmail,
+  }) {
+    final usuarioAux = _usuarios[usuarioAntigo];
+
+    if (usuarioAux == null) {
+      return null;
+    }
+
+    // Verifica nome
+    if (usuarioAntigo != novoUsuario && _usuarios.containsKey(novoUsuario)) {
+      return null;
+    }
+
+    // Verifica email
+    if (usuarioAux.email != novoEmail && _usuarios.values.any((user) => user.email == novoEmail)) {
+      return null;
+    }
+
+    if (usuarioAntigo != novoUsuario) {
+      _usuarios.remove(usuarioAntigo);
+    }
+    
+    usuarioAux.usuario = novoUsuario; 
+    usuarioAux.email = novoEmail;
+
+    _usuarios[novoUsuario] = usuarioAux;
+    
+    if (_usuarioLogado?.usuario == usuarioAntigo || _usuarioLogado?.usuario == novoUsuario) {
+      _usuarioLogado = usuarioAux;
+    }
+
+    print('Usuário atualizado: ${usuarioAux.usuario}');
+    return usuarioAux;
   }
 
   // Função Recuperar Senha
