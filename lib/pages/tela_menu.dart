@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/models/noticia.dart';
 import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 import 'package:pedropaulo_cryptos/repositories/noticia_repositorio.dart';
-import 'package:pedropaulo_cryptos/pages/tela_carteira_menu.dart';
-import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart'; 
-import 'package:pedropaulo_cryptos/pages/tela_perfil.dart'; 
 
 class TelaMenu extends StatefulWidget {
   const TelaMenu({super.key});
@@ -44,8 +41,8 @@ class _TelaMenuState extends State<TelaMenu> {
           final subtituloLower = noticia.subtitulo.toLowerCase();
           final conteudoLower = noticia.conteudo.toLowerCase();
           return tituloLower.contains(query) || 
-                 subtituloLower.contains(query) ||
-                 conteudoLower.contains(query);
+              subtituloLower.contains(query) ||
+              conteudoLower.contains(query);
         }).toList();
       }
     });
@@ -131,49 +128,6 @@ class _TelaMenuState extends State<TelaMenu> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        actions: [
-          TextButton(
-            child: const Text('Carteira'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TelaCarteira()),
-              );
-            },
-          ),
-          // Localização: Dentro de AppBar -> actions: [...]
-
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'Perfil do Usuário',
-            onPressed: () {
-              final usuarioLogado = UsuarioRepositorio().usuarioLogado;
-
-              if (usuarioLogado != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TelaPerfil(usuario: usuarioLogado),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Erro: Nenhum usuário logado.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
