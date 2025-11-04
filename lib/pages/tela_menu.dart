@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/models/noticia.dart';
 import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 import 'package:pedropaulo_cryptos/repositories/noticia_repositorio.dart';
-import 'package:pedropaulo_cryptos/pages/tela_carteira_menu.dart';
-import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart'; 
-import 'package:pedropaulo_cryptos/pages/tela_perfil.dart'; 
 
 class TelaMenu extends StatefulWidget {
   const TelaMenu({super.key});
@@ -44,8 +41,8 @@ class _TelaMenuState extends State<TelaMenu> {
           final subtituloLower = noticia.subtitulo.toLowerCase();
           final conteudoLower = noticia.conteudo.toLowerCase();
           return tituloLower.contains(query) || 
-                 subtituloLower.contains(query) ||
-                 conteudoLower.contains(query);
+              subtituloLower.contains(query) ||
+              conteudoLower.contains(query);
         }).toList();
       }
     });

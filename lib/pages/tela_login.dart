@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
-import 'package:pedropaulo_cryptos/pages/tela_recuperar_senha.dart';
-import 'package:pedropaulo_cryptos/pages/tela_registro.dart';
-import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart';
+import 'package:pedropaulo_cryptos/repositories/motion_bar_repositorio.dart';
+import 'tela_recuperar_senha.dart';
+import 'tela_registro.dart';
+import '../repositories/usuario_repositorio.dart'; 
 
 void showCustomSnackbar(BuildContext context, String message, {bool isError = false}) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -47,9 +47,10 @@ class _TelaLoginState extends State<TelaLogin> {
 
     if (user != null) {
       showCustomSnackbar(context, 'Login bem-sucedido! Bem-vindo, ${user.usuario}.');
+      
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const TelaMenu()),
+        MaterialPageRoute(builder: (context) => const MainTabNavigator()),
       );
     } else {
       showCustomSnackbar(context, 'Usuário ou senha inválidos.', isError: true);
@@ -59,12 +60,11 @@ class _TelaLoginState extends State<TelaLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Center(
         child: Container(
-          color: Color(0xFF165873),
+          color: const Color(0xFF165873),
           width: double.infinity,
-          margin: EdgeInsets.all(30),
+          margin: const EdgeInsets.all(30),
           padding: const EdgeInsets.all(30),
 
           child: SingleChildScrollView(
@@ -74,15 +74,15 @@ class _TelaLoginState extends State<TelaLogin> {
 
                 // Texto de Bem Vindo
 
-                Text('Bem Vindo!',
+                const Text('Bem Vindo!',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFF2EBDF),
                   ),
                 ),
-                SizedBox(height: 6),
-                Text('Faça o login para continuar',
+                const SizedBox(height: 6),
+                const Text('Faça o login para continuar',
                   style: TextStyle(
                     fontSize: 18,
                     color: Color(0xFFF2EBDF),
@@ -91,11 +91,11 @@ class _TelaLoginState extends State<TelaLogin> {
 
                 // Campos de Usuário
 
-                SizedBox(height: 26),
+                const SizedBox(height: 26),
                 TextField(
                   controller: _usernameController,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Usuário',
                     labelStyle: TextStyle(
@@ -106,12 +106,12 @@ class _TelaLoginState extends State<TelaLogin> {
 
                 // Campo de Senha
 
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Senha',
                     labelStyle: TextStyle(
@@ -122,19 +122,19 @@ class _TelaLoginState extends State<TelaLogin> {
 
                 // Botão de Entrar
 
-                SizedBox(height: 26),
+                const SizedBox(height: 26),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF307B8C),
+                      backgroundColor: const Color(0xFF307B8C),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Entrar',
                       style: TextStyle(
                         fontSize: 18,
@@ -146,15 +146,15 @@ class _TelaLoginState extends State<TelaLogin> {
 
                 // Botão de Recuperar Senha
 
-                SizedBox(height: 26),
+                const SizedBox(height: 26),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => TelaRecuperarSenha())
+                      MaterialPageRoute(builder: (context) => const TelaRecuperarSenha())
                       );
                   },
-                  child: Text(
+                  child: const Text(
                     'Esqueceu a Senha?',
                     style: TextStyle(
                       fontSize: 14,
@@ -167,15 +167,15 @@ class _TelaLoginState extends State<TelaLogin> {
 
                 // Botão de Registro
 
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => TelaRegistro())
+                      MaterialPageRoute(builder: (context) => const TelaRegistro())
                       );
                   },
-                  child: Text(
+                  child: const Text(
                     'Não possui uma conta? Registre-se',
                     style: TextStyle(
                       fontSize: 14,
@@ -183,7 +183,7 @@ class _TelaLoginState extends State<TelaLogin> {
                       decoration: TextDecoration.underline,
                       decorationColor: Color(0xFFF2EBDF),
                     ),
-                  ),                  
+                  ),
                 ),
               ],
             ),
