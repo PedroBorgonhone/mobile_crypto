@@ -1,16 +1,45 @@
 # pedropaulo_cryptos
 
-A new Flutter project.
+Projeto de Nóticias sobre Crypto, desnvolvido para a aula de Programação De Dispositivos Móveis.
 
-## Getting Started
+---
+## Colaboradores
+  - Pedro Perioto
+  - Paulo Henrique Koroviski.
 
-This project is a starting point for a Flutter application.
+O Projeto foi construído utilizando a ferramenta flutter, com o intuito de aprender ferramentas que possam auxiliar o desenvolvimento de aplicações mobile.  
 
-A few resources to get you started if this is your first Flutter project:
+As telas de Login, Registro, Recuperar Senha e Protótipos iniciais foram desenvolvidas por Pedro Perioto. Já as Telas de Notícia, Carteira Crypto, Carteira Ações e Perfil foram desenvolvidas por Paulo Henrique Koroviski.  
+  
+O Próximo objetivo é utilizar banco de dados especificado para flutter e arrumar bugs encontrados.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
+## Como Rodar
+Requisitos Utilizados
+  - Flutter
+  - Dart
+  - Git
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Como instalar
+
+```
+flutter pub get  
+flutter run
+```
+
+---
+
+Para poder navegar dentro da aplicação, é necessário realizar um cadastro nela (lembrando que terá que realizar toda vez que rodar a aplicação) ou utilizar o usuário já pré-cadastrado.  
+
+Os dados da conta pré-cadastrada podem ser encontrados a seguir:
+
+```
+{
+  "Usuário": "teste",
+  "Email": "teste@gmail.com",
+  "Senha": 123
+}
+```
+---
+## Bugs
+  - Problema que permiter o usuário voltar a tela de login depois de ter realizado o login e entrado em menu.
