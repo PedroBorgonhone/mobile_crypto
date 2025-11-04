@@ -39,7 +39,6 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
   }
 
   void _mostrarDialogAdicionarMoeda() {
-    // AJUSTE: Variáveis movidas para dentro do showDialog para garantir o escopo correto
     final searchController = TextEditingController();
     List<Moeda> moedasFiltradas = List.from(_moedasDisponiveis);
 
@@ -71,7 +70,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                     TextField(
                       controller: searchController,
                       onChanged: filtrar,
-                      autofocus: true, // Melhora a experiência do usuário
+                      autofocus: true, 
                       decoration: const InputDecoration(
                         labelText: 'Pesquisar',
                         prefixIcon: Icon(Icons.search),

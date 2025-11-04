@@ -131,7 +131,6 @@ class _TelaMenuState extends State<TelaMenu> {
         centerTitle: true,
         actions: [
           TextButton(
-            child: const Text('Carteira'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.white,
               textStyle: const TextStyle(
@@ -145,6 +144,7 @@ class _TelaMenuState extends State<TelaMenu> {
                 MaterialPageRoute(builder: (context) => const TelaCarteira()),
               );
             },
+            child: const Text('Carteira'),
           ),
           IconButton(
             icon: const Icon(Icons.person_outline),
