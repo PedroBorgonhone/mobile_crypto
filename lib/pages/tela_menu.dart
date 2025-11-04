@@ -128,6 +128,49 @@ class _TelaMenuState extends State<TelaMenu> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TelaCarteira()),
+              );
+            },
+            child: const Text('Carteira'),
+          ),
+          // Localização: Dentro de AppBar -> actions: [...]
+
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Perfil do Usuário',
+            onPressed: () {
+              final usuarioLogado = UsuarioRepositorio().usuarioLogado;
+
+              if (usuarioLogado != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TelaPerfil(usuario: usuarioLogado),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Erro: Nenhum usuário logado.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),

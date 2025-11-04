@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "435373855093",
+    "project_id": "app-cripto-8dcaa",
+    "storage_bucket": "app-cripto-8dcaa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435373855093:android:02ffc28e6ca67dc887c33c",
+        "android_client_info": {
+          "package_name": "br.com.pedropaulo_cryptos.pedropaulo_cryptos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANqTIXUrEPcoFTN0BbAw_medmrPUH_n7g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

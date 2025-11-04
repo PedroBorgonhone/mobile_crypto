@@ -40,7 +40,6 @@ class _CarteiraMoedasState extends State<CarteiraMoedas> {
         backgroundColor: Colors.blueGrey,
         actions: [
           PopupMenuButton<SortOptions>(
-            // AQUI ESTÁ A CORREÇÃO
             onSelected: (option) => _sortList(newSortOption: option),
             itemBuilder: (BuildContext context) => <PopupMenuEntry<SortOptions>>[
               const PopupMenuItem(
