@@ -8,12 +8,9 @@ import 'package:pedropaulo_cryptos/pages/tela_menu.dart';
 import 'package:pedropaulo_cryptos/pages/tela_perfil.dart';
 import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
-// 1. IMPORTAR OS NOVOS SERVIÇOS
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:pedropaulo_cryptos/services/auth_service.dart';
 import 'package:pedropaulo_cryptos/services/firestore_service.dart';
-// import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart'; // <- REMOVIDO
 
 class MainTabNavigator extends StatefulWidget {
   const MainTabNavigator({super.key});
@@ -25,13 +22,12 @@ class MainTabNavigator extends StatefulWidget {
 class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProviderStateMixin {
   late MotionTabBarController _motionTabBarController;
 
-  // 2. INSTANCIAR NOVOS SERVIÇOS E GUARDAR DADOS
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
 
-  User? _authUser; // O usuário da "Portaria" (Auth)
-  Map<String, dynamic>? _userData; // Os dados do "Arquivo" (Firestore)
-  bool _isLoading = true; // Começamos carregando
+  User? _authUser; 
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -41,39 +37,31 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
       length: 3,
       vsync: this, 
     );
-    // 3. Chamar a função para carregar os dados
     _loadUserData();
   }
 
-  // 4. NOVA FUNÇÃO DE CARREGAMENTO
   Future<void> _loadUserData() async {
-    // 4.1. Pega o usuário da "Portaria"
     _authUser = _authService.currentUser;
 
     if (_authUser == null) {
-      // Se, por algum motivo, não há usuário, volta ao Login
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const TelaLogin()),  //erro aqui
+          MaterialPageRoute(builder: (context) => const TelaLogin()),
           (route) => false,
         );
       }
       return;
     }
-
-    // 4.2. Pega os dados do "Arquivo"
+    
     try {
       _userData = await _firestoreService.getUserData(_authUser!.uid);
       if (_userData == null) {
-        // Isso não deveria acontecer se o registro funcionou
         print("Erro: Usuário não encontrado no Firestore.");
-        // (Poderia deslogar aqui, mas vamos deixar carregar por enquanto)
       }
     } catch (e) {
       print("Erro ao carregar dados do usuário: $e");
     }
 
-    // 4.3. Avisa à tela que paramos de carregar
     setState(() => _isLoading = false);
   }
 
@@ -83,10 +71,8 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
     super.dispose();
   }
 
-  // 5. O BUILD AGORA TRATA O ESTADO DE LOADING
   @override
   Widget build(BuildContext context) {
-    // 5.1. Se estamos carregando, mostra um "loading" central
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFF16213E),
@@ -96,8 +82,6 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
       );
     }
     
-    // 5.2. Se o usuário não carregou (deu erro), mostra um "erro"
-    // (O _userData é nulo se o Firestore falhar)
     if (_authUser == null || _userData == null) {
       return Scaffold(
         backgroundColor: const Color(0xFF16213E),
@@ -113,7 +97,7 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
                 child: const Text('Voltar ao Login'),
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const TelaLogin()), //erro aqui
+                    MaterialPageRoute(builder: (context) => const TelaLogin()),
                     (route) => false,
                   );
                 },
@@ -124,14 +108,15 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
       );
     }
 
-    // 5.3. Se deu tudo certo, constrói a tela principal
-    // (O seu código original daqui para baixo)
-
+    // --- MUDANÇA PRINCIPAL AQUI ---
     // Criamos a lista de telas AQUI, agora que temos os dados
     final List<Widget> screens = [
-      const TelaCarteira(),
+      // 1. Passa os dados do usuário para a TelaCarteira
+      TelaCarteira(
+        uid: _authUser!.uid,
+        userData: _userData!,
+      ),
       const TelaMenu(),
-      // 6. Passa os dados REAIS para a TelaPerfil
       TelaPerfil(
         uid: _authUser!.uid,
         userData: _userData!,
@@ -149,7 +134,6 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
       
       bottomNavigationBar: MotionTabBar(
         controller: _motionTabBarController,
-        // ... (O resto do seu MotionTabBar continua 100% igual)
         initialSelectedTab: "Notícias",
         useSafeArea: true,
         labelAlwaysVisible: true,

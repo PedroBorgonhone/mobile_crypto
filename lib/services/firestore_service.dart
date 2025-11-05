@@ -1,12 +1,12 @@
 // lib/services/firestore_service.dart
 
-import 'package:cloud_firestore/cloud_firestore.dart';//erro aqui
-import 'package:firebase_auth/firebase_auth.dart'; // Precisamos disso para o update do email
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance; //erro aqui
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // --- MÉTODO ANTIGO (Salvar no Registro) ---
+  // --- MÉTODO ATUALIZADO (Salvar no Registro) ---
   Future<void> saveUserData({
     required String uid,
     required String username,
@@ -17,6 +17,9 @@ class FirestoreService {
         'username': username,
         'email': email,
         'createdAt': FieldValue.serverTimestamp(),
+        // 1. ADICIONADO: Inicializa as carteiras como listas vazias
+        'carteiraCripto': [],
+        'carteiraAcoes': [],
       });
     } catch (e) {
       print('Erro ao salvar dados no Firestore: $e');
@@ -24,47 +27,85 @@ class FirestoreService {
     }
   }
 
-  // --- NOVO MÉTODO (Buscar Dados do Usuário) ---
+  // --- MÉTODO (Buscar Dados do Usuário) ---
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
       final doc = await _db.collection('usuarios').doc(uid).get();
       if (doc.exists) {
-        return doc.data(); // Retorna o mapa de dados (ex: {'username': 'Paulo', 'email': '...'})
+        return doc.data();
       }
-      return null; // Usuário do Auth existe, mas não tem "pasta" no Firestore
+      return null;
     } catch (e) {
       print('Erro ao buscar dados do Firestore: $e');
       throw Exception('Erro ao buscar dados do usuário.');
     }
   }
 
-  // --- NOVO MÉTODO (Atualizar Perfil) ---
+  // --- MÉTODO (Atualizar Perfil) ---
   Future<void> updateUserData({
     required String uid,
     required String newUsername,
     required String newEmail,
   }) async {
     try {
-      // 1. Atualiza os dados no "Arquivo" (Firestore)
       await _db.collection('usuarios').doc(uid).update({
         'username': newUsername,
         'email': newEmail,
       });
 
-      // 2. Atualiza o email na "Portaria" (Auth)
-      // (Opcional, mas muito importante para o login)
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null && currentUser.email != newEmail) {
         await currentUser.verifyBeforeUpdateEmail(newEmail);
       }
     } on FirebaseAuthException catch (e) {
       print('Erro ao atualizar e-mail no Auth: ${e.code}');
-      // Se a senha for antiga, o Firebase pode bloquear isso.
-      // Vamos lançar o erro para a tela de perfil tratar.
       rethrow;
     } catch (e) {
       print('Erro ao atualizar dados no Firestore: $e');
       throw Exception('Erro ao atualizar perfil.');
+    }
+  }
+
+  // --- NOVOS MÉTODOS PARA A CARTEIRA ---
+
+  // Tipo pode ser 'carteiraCripto' ou 'carteiraAcoes'
+  String _getFieldNameFromType(String type) {
+    if (type == 'cripto') return 'carteiraCripto';
+    if (type == 'acao') return 'carteiraAcoes';
+    throw Exception('Tipo de ativo inválido');
+  }
+
+  // Adiciona um ativo (ex: 'BTC' ou 'PETR4') à lista no Firestore
+  Future<void> addAssetToCarteira({
+    required String uid,
+    required String assetSymbol,
+    required String type, // 'cripto' ou 'acao'
+  }) async {
+    final fieldName = _getFieldNameFromType(type);
+    try {
+      await _db.collection('usuarios').doc(uid).update({
+        fieldName: FieldValue.arrayUnion([assetSymbol]),
+      });
+    } catch (e) {
+      print('Erro ao adicionar ativo: $e');
+      throw Exception('Erro ao adicionar ativo na carteira.');
+    }
+  }
+
+  // Remove um ativo da lista no Firestore
+  Future<void> removeAssetFromCarteira({
+    required String uid,
+    required String assetSymbol,
+    required String type, // 'cripto' ou 'acao'
+  }) async {
+    final fieldName = _getFieldNameFromType(type);
+    try {
+      await _db.collection('usuarios').doc(uid).update({
+        fieldName: FieldValue.arrayRemove([assetSymbol]),
+      });
+    } catch (e) {
+      print('Erro ao remover ativo: $e');
+      throw Exception('Erro ao remover ativo da carteira.');
     }
   }
 }
