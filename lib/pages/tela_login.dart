@@ -1,8 +1,14 @@
+// lib/pages/tela_login.dart
+
 import 'package:flutter/material.dart';
+// 1. IMPORTAR OS NOVOS SERVIÇOS
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pedropaulo_cryptos/services/auth_service.dart'; // Nosso serviço
+
 import 'package:pedropaulo_cryptos/repositories/motion_bar_repositorio.dart';
 import 'tela_recuperar_senha.dart';
 import 'tela_registro.dart';
-import '../repositories/usuario_repositorio.dart'; 
+// import '../repositories/usuario_repositorio.dart'; // <- REMOVIDO
 
 void showCustomSnackbar(BuildContext context, String message, {bool isError = false}) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -23,38 +29,70 @@ class TelaLogin extends StatefulWidget {
 }
 
 class _TelaLoginState extends State<TelaLogin> {
-  final _usernameController = TextEditingController();
+  // 2. MUDAR 'USERNAME' PARA 'EMAIL'
+  // final _usernameController = TextEditingController(); // <- REMOVIDO
+  final _emailController = TextEditingController(); // <- ADICIONADO
   final _passwordController = TextEditingController();
-  final _userRepository = UsuarioRepositorio();
+  
+  // 3. TROCAR O REPOSITÓRIO ANTIGO PELO NOVO SERVIÇO
+  // final _userRepository = UsuarioRepositorio(); // <- REMOVIDO
+  final _authService = AuthService(); // <- ADICIONADO
+
+  bool _isLoading = false; // Estado de loading
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _login() {
-    final username = _usernameController.text.trim();
+  // 4. ATUALIZAR A FUNÇÃO DE LOGIN
+  void _login() async {
+    // final username = _usernameController.text.trim(); // <- REMOVIDO
+    final email = _emailController.text.trim(); // <- ADICIONADO
     final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      showCustomSnackbar(context, 'Por favor, preencha todos os campos.', isError: true);
+    if (email.isEmpty || password.isEmpty) {
+      showCustomSnackbar(context, 'Por favor, preencha e-mail e senha.', isError: true);
       return;
     }
 
-    final user = _userRepository.login(usuario: username, senha: password);
+    setState(() => _isLoading = true);
 
-    if (user != null) {
-      showCustomSnackbar(context, 'Login bem-sucedido! Bem-vindo, ${user.usuario}.');
-      
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainTabNavigator()),
+    // --- NOVA LÓGICA COM FIREBASE ---
+    try {
+      // 5. Tenta fazer login com o serviço
+      final user = await _authService.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
-    } else {
-      showCustomSnackbar(context, 'Usuário ou senha inválidos.', isError: true);
+
+      // 6. Se deu certo (usuário não é nulo)
+      if (user != null) {
+        showCustomSnackbar(context, 'Login bem-sucedido! Bem-vindo.');
+        
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainTabNavigator()),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      // 7. Trata erros específicos do Firebase
+      String errorMessage = 'Erro ao fazer login.';
+      if (e.code == 'invalid-email') {
+        errorMessage = 'O formato do e-mail é inválido.';
+      } else if (e.code == 'invalid-credential') {
+        errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+      }
+      showCustomSnackbar(context, errorMessage, isError: true);
+    } catch (e) {
+      showCustomSnackbar(context, 'Erro desconhecido: $e', isError: true);
     }
+
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -71,9 +109,7 @@ class _TelaLoginState extends State<TelaLogin> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-
-                // Texto de Bem Vindo
-
+                // ... (Texto de 'Bem Vindo' continua igual)
                 const Text('Bem Vindo!',
                   style: TextStyle(
                     fontSize: 26,
@@ -88,24 +124,23 @@ class _TelaLoginState extends State<TelaLogin> {
                     color: Color(0xFFF2EBDF),
                   ),
                 ),
-
-                // Campos de Usuário
-
+                
+                // 8. ATUALIZAR CAMPO DE USUÁRIO PARA EMAIL
                 const SizedBox(height: 26),
                 TextField(
-                  controller: _usernameController,
+                  controller: _emailController, // <- MUDADO
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
+                  keyboardType: TextInputType.emailAddress, // Bônus
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Usuário',
+                    labelText: 'Email', // <- MUDADO
                     labelStyle: TextStyle(
                       color: Color(0xFFF2EBDF),
                     ),
                   ),
                 ),
 
-                // Campo de Senha
-
+                // Campo de Senha (continua igual)
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
@@ -120,32 +155,34 @@ class _TelaLoginState extends State<TelaLogin> {
                   ),
                 ),
 
-                // Botão de Entrar
-
+                // Botão de Entrar (MODIFICADO)
                 const SizedBox(height: 26),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _login,
+                    // 9. Desativa o botão se estiver carregando
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF307B8C),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Entrar',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFFF2EBDF),
-                      ),
-                    ),
+                    // 10. Mostra 'loading' ou o texto
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Entrar',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Color(0xFFF2EBDF),
+                            ),
+                          ),
                   ),
                 ),
-
-                // Botão de Recuperar Senha
-
+                
+                // ... (Restante dos botões 'Esqueceu a Senha' e 'Registre-se' continuam iguais)
                 const SizedBox(height: 26),
                 TextButton(
                   onPressed: () {
@@ -164,9 +201,6 @@ class _TelaLoginState extends State<TelaLogin> {
                     ),
                   ),
                 ),
-
-                // Botão de Registro
-
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
