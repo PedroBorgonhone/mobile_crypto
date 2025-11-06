@@ -40,7 +40,11 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
     _loadUserData();
   }
 
+  // ESTA É A FUNÇÃO QUE QUEREMOS CHAMAR DE NOVO
   Future<void> _loadUserData() async {
+    // Garante que a tela saiba que estamos carregando
+    setState(() => _isLoading = true);
+
     _authUser = _authService.currentUser;
 
     if (_authUser == null) {
@@ -62,6 +66,7 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
       print("Erro ao carregar dados do usuário: $e");
     }
 
+    // Avisa à tela que paramos de carregar
     setState(() => _isLoading = false);
   }
 
@@ -83,16 +88,14 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
     }
     
     if (_authUser == null || _userData == null) {
+      // (Tela de erro, como antes)
       return Scaffold(
         backgroundColor: const Color(0xFF16213E),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Erro ao carregar seu perfil.',
-                style: TextStyle(color: Colors.white),
-              ),
+              const Text('Erro ao carregar seu perfil.', style: TextStyle(color: Colors.white)),
               TextButton(
                 child: const Text('Voltar ao Login'),
                 onPressed: () {
@@ -109,17 +112,19 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
     }
 
     // --- MUDANÇA PRINCIPAL AQUI ---
-    // Criamos a lista de telas AQUI, agora que temos os dados
     final List<Widget> screens = [
-      // 1. Passa os dados do usuário para a TelaCarteira
       TelaCarteira(
         uid: _authUser!.uid,
         userData: _userData!,
       ),
-      const TelaMenu(),
+      TelaMenu(
+        userData: _userData!,
+      ),
+      // 1. Passa a *função de recarregar* para a TelaPerfil
       TelaPerfil(
         uid: _authUser!.uid,
         userData: _userData!,
+        onProfileUpdated: _loadUserData, // <-- NOVA LINHA (O "Callback")
       ),
     ];
     
@@ -129,22 +134,21 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
       body: TabBarView(
         physics: const NeverScrollableScrollPhysics(),
         controller: _motionTabBarController,
-        children: screens, // Usa a lista de telas criada
+        children: screens,
       ),
       
       bottomNavigationBar: MotionTabBar(
         controller: _motionTabBarController,
+        // ... (O resto do seu MotionTabBar continua 100% igual)
         initialSelectedTab: "Notícias",
         useSafeArea: true,
         labelAlwaysVisible: true,
-        
         labels: const ["Carteira", "Notícias", "Perfil"],
         icons: const [
           Icons.account_balance_wallet_outlined,
           Icons.newspaper, 
           Icons.person,
         ],
-
         tabSize: 50,
         tabBarHeight: 60,
         tabBarColor: const Color(0xFF003366), 
@@ -153,13 +157,11 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
         tabIconSelectedSize: 28.0, 
         tabSelectedColor: Colors.white,
         tabIconSelectedColor: const Color(0xFF16213E),
-        
         textStyle: const TextStyle(
           fontSize: 12,
           color: Colors.white70,
           fontWeight: FontWeight.w500,
         ),
-        
         onTabItemSelected: (int index) {
           setState(() {
             _motionTabBarController.index = index;

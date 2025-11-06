@@ -9,11 +9,13 @@ import 'package:pedropaulo_cryptos/services/firestore_service.dart'; // Para Sal
 class TelaPerfil extends StatefulWidget {
   final String uid;
   final Map<String, dynamic> userData;
+  final VoidCallback onProfileUpdated; 
 
   const TelaPerfil({
     super.key,
     required this.uid,
     required this.userData,
+    required this.onProfileUpdated, 
   });
 
   @override
@@ -44,10 +46,10 @@ class _TelaPerfilState extends State<TelaPerfil> {
     super.dispose();
   }
 
-  // 1. FUNÇÃO _salvarAlteracoes (AGORA É SÓ O "GERENTE")
+  // FUNÇÃO _salvarAlteracoes (Atualizada para usar o callback)
   void _salvarAlteracoes() async {
     if (!_formKey.currentState!.validate()) {
-      return; // Se o formulário for inválido, não faz nada
+      return; 
     }
 
     setState(() => _isLoading = true);
@@ -55,18 +57,14 @@ class _TelaPerfilState extends State<TelaPerfil> {
     final String novoUsername = _usernameController.text.trim();
     final String novoEmail = _emailController.text.trim();
 
-    // 2. VERIFICA SE O EMAIL MUDOU
     final bool emailMudou = novoEmail != widget.userData['email'];
 
     try {
       if (emailMudou) {
-        // 3. OPERAÇÃO SENSÍVEL: Pede a senha
-        await _mostrarDialogReautenticacao(novoUsername, novoEmail);
-        
-        // Se a re-autenticação foi bem-sucedida, o e-mail foi verificado
+        // OPERAÇÃO SENSÍVEL: Pede a senha
+        await _mostrarDialogReautenticacaoEmail(novoUsername, novoEmail);
         showCustomSnackbar(context, 'Sucesso! Verifique seu *novo* e-mail para confirmar a mudança.');
         
-        // Atualiza os dados no Firestore (isso é seguro)
         await _firestoreService.updateUserData(
           uid: widget.uid,
           newUsername: novoUsername,
@@ -74,39 +72,40 @@ class _TelaPerfilState extends State<TelaPerfil> {
         );
 
       } else {
-        // 4. OPERAÇÃO SEGURA: Só mudou o username
-        // Apenas atualiza o Firestore (Auth não precisa ser chamado)
+        // OPERAÇÃO SEGURA: Só mudou o username
         await _firestoreService.updateUserData(
           uid: widget.uid,
           newUsername: novoUsername,
-          newEmail: novoEmail, // Envia o email (que é o mesmo)
+          newEmail: novoEmail, 
         );
         showCustomSnackbar(context, 'Perfil atualizado com sucesso!');
       }
 
+      widget.onProfileUpdated(); 
+
     } on FirebaseAuthException catch (e) {
-      // 5. Trata erros da re-autenticação (ex: senha errada)
       String msg = 'Erro ao salvar.';
       if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
         msg = 'Senha incorreta. Alterações não salvas.';
       }
       showCustomSnackbar(context, msg, isError: true);
     } catch (e) {
-      showCustomSnackbar(context, 'Erro: $e', isError: true);
+      // Captura o "Operação cancelada" do dialog
+      showCustomSnackbar(context, 'Erro: ${e.toString()}', isError: true);
     }
 
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
-  // 6. NOVA FUNÇÃO (Pop-up de Senha)
-  Future<void> _mostrarDialogReautenticacao(String novoUsername, String novoEmail) async {
+  // (A função de re-autenticação do Email)
+  Future<void> _mostrarDialogReautenticacaoEmail(String novoUsername, String novoEmail) async {
     final passwordController = TextEditingController();
     
-    // 'Completer' é usado para esperar o usuário fechar o dialog
-    // É uma forma avançada de 'await'
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // O usuário NÃO PODE fechar clicando fora
+      barrierDismissible: false, 
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Operação Sensível'),
@@ -131,8 +130,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
-                Navigator.of(context).pop(); // Fecha o dialog
-                // Lança um erro para o _salvarAlteracoes saber que foi cancelado
+                Navigator.of(context).pop(); 
                 throw Exception('Operação cancelada pelo usuário.'); 
               },
             ),
@@ -143,16 +141,12 @@ class _TelaPerfilState extends State<TelaPerfil> {
                 if (password.isEmpty) return;
 
                 try {
-                  // 7. TENTA RE-AUTENTICAR
                   await _authService.reauthenticateWithPassword(password);
-                  
-                  // 8. SE DEU CERTO, CHAMA A TROCA DE EMAIL
                   await _authService.currentUser!.verifyBeforeUpdateEmail(novoEmail);
                   
-                  if (mounted) Navigator.of(context).pop(); // Fecha o dialog
+                  if (mounted) Navigator.of(context).pop(); 
 
                 } on FirebaseAuthException catch (e) {
-                  // Se a senha estiver errada, fecha o dialog e lança o erro
                   if (mounted) Navigator.of(context).pop();
                   throw e;
                 }
@@ -164,7 +158,166 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
-  // ... (O resto do seu arquivo: _logout, build, _inputDecoration... continua igual)
+  // --- NOVA FUNÇÃO (Pop-up de Alterar Senha) ---
+  void _mostrarDialogAlterarSenha() {
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Alterar Senha'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: oldPasswordController,
+                  obscureText: true,
+                  autofocus: true,
+                  decoration: const InputDecoration(labelText: 'Senha Antiga'),
+                  validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                ),
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Nova Senha'),
+                  validator: (v) {
+                    if (v!.isEmpty) return 'Campo obrigatório';
+                    if (v.length < 6) return 'Mínimo 6 caracteres';
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Confirmar Nova Senha'),
+                  validator: (v) {
+                    if (v! != newPasswordController.text) return 'Senhas não batem';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              child: const Text('Alterar'),
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                
+                final oldPass = oldPasswordController.text;
+                final newPass = newPasswordController.text;
+                
+                try {
+                  await _authService.updatePassword(
+                    oldPassword: oldPass,
+                    newPassword: newPass,
+                  );
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    showCustomSnackbar(context, 'Senha alterada com sucesso!');
+                  }
+                } on FirebaseAuthException catch (e) {
+                  String msg = 'Erro ao alterar senha.';
+                  if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
+                    msg = 'Senha antiga incorreta.';
+                  } else if (e.code == 'weak-password') {
+                    msg = 'Nova senha é muito fraca.';
+                  }
+                  showCustomSnackbar(context, msg, isError: true);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- NOVA FUNÇÃO (Pop-up de Excluir Conta) ---
+  void _mostrarDialogExcluirConta() {
+    final passwordController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Excluir Conta'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Isso é permanente! Todos os seus dados (carteira e perfil) serão perdidos. Para confirmar, digite sua senha.',
+                style: TextStyle(color: Colors.red),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Sua Senha Atual'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Excluir Permanentemente'),
+              onPressed: () async {
+                final password = passwordController.text.trim();
+                if (password.isEmpty) {
+                  showCustomSnackbar(context, 'Senha é obrigatória', isError: true);
+                  return;
+                }
+
+                try {
+                  // 1. Re-autentica
+                  await _authService.reauthenticateWithPassword(password);
+                  
+                  // 2. Deleta os dados do "Arquivo" (Firestore)
+                  await _firestoreService.deleteUserData(widget.uid);
+                  
+                  // 3. Deleta o usuário da "Portaria" (Auth)
+                  await _authService.deleteAccount();
+                  
+                  // 4. Manda de volta para o Login
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const TelaLogin()),
+                      (route) => false,
+                    );
+                    showCustomSnackbar(context, 'Conta excluída com sucesso.');
+                  }
+
+                } on FirebaseAuthException catch (e) {
+                  String msg = 'Erro ao excluir conta.';
+                  if (e.code == 'invalid-credential' || e.code == 'wrong-password') {
+                    msg = 'Senha incorreta.';
+                  }
+                  showCustomSnackbar(context, msg, isError: true);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // (O seu método de Logout, Build e InputDecoration continuam iguais)
   void _logout() async {
     await _authService.signOut();
     if (!mounted) return;
@@ -197,7 +350,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // Foto do Usuário (Ícone Enorme)
+              // ... (Foto, campos de username e email... tudo igual)
               Center(
                 child: Container(
                   width: 150,
@@ -246,10 +399,11 @@ class _TelaPerfilState extends State<TelaPerfil> {
               ),
               const SizedBox(height: 40),
 
+              // Botão Salvar Alterações
               ElevatedButton(
                 onPressed: _isLoading ? null : _salvarAlteracoes,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF90CAF9), // Cor de destaque
+                  backgroundColor: const Color(0xFF90CAF9),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -266,6 +420,53 @@ class _TelaPerfilState extends State<TelaPerfil> {
                         ),
                       ),
               ),
+              
+              const SizedBox(height: 20),
+              const Divider(color: Colors.white24),
+              const SizedBox(height: 20),
+              
+              // --- NOVO BOTÃO (Alterar Senha) ---
+              OutlinedButton(
+                onPressed: _mostrarDialogAlterarSenha,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  side: const BorderSide(color: Colors.white54),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Alterar Senha',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // --- NOVO BOTÃO (Excluir Conta) ---
+              OutlinedButton(
+                onPressed: _mostrarDialogExcluirConta,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  side: const BorderSide(color: Colors.redAccent),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Excluir Conta',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
             ],
           ),
         ),

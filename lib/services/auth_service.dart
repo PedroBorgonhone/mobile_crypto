@@ -53,7 +53,6 @@ class AuthService {
     }
   }
 
-  // --- NOVO MÉTODO DE RE-AUTENTICAÇÃO ---
   Future<void> reauthenticateWithPassword(String password) async {
     try {
       User? user = _firebaseAuth.currentUser;
@@ -61,21 +60,48 @@ class AuthService {
         throw Exception('Nenhum usuário logado para re-autenticar.');
       }
 
-      // 1. Cria a "credencial" com o email do usuário e a senha que ele digitou
       AuthCredential credential = EmailAuthProvider.credential(
         email: user.email!, 
         password: password,
       );
       
-      // 2. Tenta re-autenticar
       await user.reauthenticateWithCredential(credential);
 
     } on FirebaseAuthException catch (e) {
-      // Se a senha estiver errada, vai dar 'invalid-credential'
       print('Erro ao re-autenticar: ${e.code}');
       throw e; 
     } catch (e) {
       print('Erro desconhecido ao re-autenticar: $e');
+      throw e;
+    }
+  }
+
+  // --- NOVO MÉTODO (Alterar Senha) ---
+  Future<void> updatePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      // 1. Re-autentica o usuário com a senha antiga
+      await reauthenticateWithPassword(oldPassword);
+      
+      // 2. Se a re-autenticação foi bem-sucedida, atualiza para a nova senha
+      await _firebaseAuth.currentUser!.updatePassword(newPassword);
+
+    } catch (e) {
+      // Se a senha antiga estiver errada ou a nova for fraca, vai lançar um erro
+      print('Erro ao atualizar senha: $e');
+      throw e;
+    }
+  }
+
+  // --- NOVO MÉTODO (Excluir Conta) ---
+  Future<void> deleteAccount() async {
+    try {
+      // (A re-autenticação deve ser feita ANTES de chamar este método)
+      await _firebaseAuth.currentUser!.delete();
+    } catch (e) {
+      print('Erro ao excluir conta do Auth: $e');
       throw e;
     }
   }

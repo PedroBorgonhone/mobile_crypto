@@ -2,11 +2,14 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pedropaulo_cryptos/models/noticia.dart';
+import 'package:pedropaulo_cryptos/repositories/noticia_repositorio.dart';
+import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // --- MÉTODO ATUALIZADO (Salvar no Registro) ---
+  // --- MÉTODOS DE USUÁRIO (Criar, Ler, Atualizar) ---
   Future<void> saveUserData({
     required String uid,
     required String username,
@@ -17,7 +20,6 @@ class FirestoreService {
         'username': username,
         'email': email,
         'createdAt': FieldValue.serverTimestamp(),
-        // 1. ADICIONADO: Inicializa as carteiras como listas vazias
         'carteiraCripto': [],
         'carteiraAcoes': [],
       });
@@ -27,7 +29,6 @@ class FirestoreService {
     }
   }
 
-  // --- MÉTODO (Buscar Dados do Usuário) ---
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
       final doc = await _db.collection('usuarios').doc(uid).get();
@@ -41,7 +42,6 @@ class FirestoreService {
     }
   }
 
-  // --- MÉTODO (Atualizar Perfil) ---
   Future<void> updateUserData({
     required String uid,
     required String newUsername,
@@ -66,22 +66,24 @@ class FirestoreService {
     }
   }
 
-  // --- NOVOS MÉTODOS PARA A CARTEIRA ---
-
-  // Tipo pode ser 'carteiraCripto' ou 'carteiraAcoes'
-  String _getFieldNameFromType(String type) {
-    if (type == 'cripto') return 'carteiraCripto';
-    if (type == 'acao') return 'carteiraAcoes';
-    throw Exception('Tipo de ativo inválido');
+  // --- NOVO MÉTODO (Excluir Dados do Usuário) ---
+  Future<void> deleteUserData(String uid) async {
+    try {
+      // Deleta o "documento" (pasta) do usuário e todos os seus dados
+      await _db.collection('usuarios').doc(uid).delete();
+    } catch (e) {
+      print('Erro ao excluir dados do Firestore: $e');
+      throw Exception('Erro ao excluir dados do usuário.');
+    }
   }
 
-  // Adiciona um ativo (ex: 'BTC' ou 'PETR4') à lista no Firestore
+  // --- MÉTODOS DA CARTEIRA ---
   Future<void> addAssetToCarteira({
     required String uid,
     required String assetSymbol,
-    required String type, // 'cripto' ou 'acao'
+    required String type,
   }) async {
-    final fieldName = _getFieldNameFromType(type);
+    final fieldName = type == 'cripto' ? 'carteiraCripto' : 'carteiraAcoes';
     try {
       await _db.collection('usuarios').doc(uid).update({
         fieldName: FieldValue.arrayUnion([assetSymbol]),
@@ -92,13 +94,12 @@ class FirestoreService {
     }
   }
 
-  // Remove um ativo da lista no Firestore
   Future<void> removeAssetFromCarteira({
     required String uid,
     required String assetSymbol,
-    required String type, // 'cripto' ou 'acao'
+    required String type,
   }) async {
-    final fieldName = _getFieldNameFromType(type);
+    final fieldName = type == 'cripto' ? 'carteiraCripto' : 'carteiraAcoes';
     try {
       await _db.collection('usuarios').doc(uid).update({
         fieldName: FieldValue.arrayRemove([assetSymbol]),
@@ -106,6 +107,55 @@ class FirestoreService {
     } catch (e) {
       print('Erro ao remover ativo: $e');
       throw Exception('Erro ao remover ativo da carteira.');
+    }
+  }
+  
+  // --- MÉTODOS DE NOTÍCIAS ---
+  Future<void> seedNoticiasDatabase() async {
+    final noticiasCollection = _db.collection('noticias_publicas');
+    final noticiasLocais = NoticiaRepositorio.tabela;
+    print('Iniciando "semeadura" do banco de notícias...');
+    final batch = _db.batch();
+    for (var noticia in noticiasLocais) {
+      final docRef = noticiasCollection.doc(); 
+      batch.set(docRef, noticia.toMap()); 
+    }
+    await batch.commit();
+    print('Banco de notícias "semeado" com ${noticiasLocais.length} notícias.');
+  }
+
+  Future<List<Noticia>> getNoticiasFiltradas(List<String> siglasDaCarteira) async {
+    if (siglasDaCarteira.isEmpty) {
+      return []; 
+    }
+    List<Noticia> noticiasFiltradas = [];
+    final Set<String> siglasSet = Set.from(siglasDaCarteira);
+
+    try {
+      final snapshot = await _db
+          .collection('noticias_publicas')
+          .get();
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final String? ativoTag = data['ativoTag'] as String?; 
+        if (ativoTag != null && siglasSet.contains(ativoTag)) {
+          noticiasFiltradas.add(
+            Noticia(
+              fonte: data['fonte'],
+              titulo: data['titulo'],
+              subtitulo: data['subtitulo'],
+              imagemAsset: data['imagemAsset'],
+              prazo: PrazoIndicador.values.firstWhere((e) => e.name == data['prazo']),
+              conteudo: data['conteudo'],
+              ativoTag: data['ativoTag'],
+            ),
+          );
+        }
+      }
+      return noticiasFiltradas;
+    } catch (e) {
+      print('Erro ao buscar notícias filtradas (método loop): $e');
+      return [];
     }
   }
 }
