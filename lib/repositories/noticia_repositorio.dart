@@ -12,6 +12,7 @@ class NoticiaRepositorio {
       imagemAsset: 'images/bitcoin_news.png',
       prazo: PrazoIndicador.longo,
       conteudo: 'O Bitcoin (BTC) continua a solidificar sua posição como uma reserva de valor digital, atraindo a atenção de grandes investidores institucionais. Em um cenário de crescente inflação global e instabilidade nos mercados tradicionais, a criptomoeda é vista como uma forma de proteção de capital, similar ao papel historicamente desempenhado pelo ouro. Analistas apontam que a descentralização e a oferta limitada do Bitcoin são fatores-chave para essa percepção de segurança a longo prazo.',
+      ativoTag: 'BTC', // <-- ADICIONADO
     ),
 
     Noticia(
@@ -21,6 +22,7 @@ class NoticiaRepositorio {
       imagemAsset: 'images/weg_news.png',
       prazo: PrazoIndicador.longo,
       conteudo: 'A WEG, multinacional brasileira de equipamentos elétricos, anunciou hoje a assinatura de um contrato de 2 bilhões de euros para o fornecimento de turbinas para um novo parque eólico offshore no Mar do Norte. O projeto reforça a posição da empresa como uma líder global na transição energética e tem capacidade para fornecer energia limpa para mais de 500 mil residências, um marco para a indústria nacional.',
+      ativoTag: 'WEGE3', // <-- ADICIONADO
     ),
     
     Noticia(
@@ -30,6 +32,7 @@ class NoticiaRepositorio {
       imagemAsset: 'images/nvidia_news.png',
       prazo: PrazoIndicador.medio,
       conteudo: 'A Nvidia lançou sua nova arquitetura de GPUs, codinome "Prometheus", prometendo um salto de 5x no desempenho para cargas de trabalho de Inteligência Artificial. A notícia, somada ao anúncio de um desdobramento de ações de 10 por 1 para tornar os papéis mais acessíveis, fez as ações da empresa subirem mais de 8% no pré-mercado. O movimento sinaliza uma forte confiança da empresa em seu domínio no crescente mercado de IA.',
+      ativoTag: 'NVDA', // <-- ADICIONADO
     ),
 
     Noticia(
@@ -39,6 +42,7 @@ class NoticiaRepositorio {
       imagemAsset: 'images/ethereum_news.png',
       prazo: PrazoIndicador.curto,
       conteudo: 'A mais recente atualização da rede Ethereum, conhecida como "Dencun", foi implementada com sucesso, introduzindo o "proto-danksharding". Essa melhoria técnica reduz em até 90% os custos de transação para os usuários de redes de camada 2, como Arbitrum e Optimism. A expectativa é que a mudança impulsione uma nova onda de adoção, embora o preço do ETH possa enfrentar volatilidade enquanto o mercado se ajusta à nova dinâmica.',
+      ativoTag: 'ETH', // <-- ADICIONADO
     ),
 
     Noticia(
@@ -48,6 +52,7 @@ class NoticiaRepositorio {
       imagemAsset: 'images/tesla_news.png',
       prazo: PrazoIndicador.longo,
       conteudo: 'Em um movimento estratégico para dominar o mercado de veículos elétricos de massa, a Tesla confirmou um investimento de \$2 bilhões na construção de uma nova Gigafábrica no México, focada exclusivamente na produção de baterias de nova geração. Essa produção verticalizada é essencial para viabilizar o "Model 2", o aguardado carro popular da marca, com preço estimado abaixo de \$25.000, o que poderia acelerar drasticamente a transição para a mobilidade elétrica.',
+      ativoTag: 'TSLA', // <-- ADICIONADO
     ),
 
     Noticia(
@@ -57,6 +62,7 @@ class NoticiaRepositorio {
       imagemAsset: 'images/cardano_news.png',
       prazo: PrazoIndicador.medio,
       conteudo: 'A Fundação Cardano, em parceria com ONGs locais, iniciou a implementação de um sistema de identidade digital soberana em blockchain para comunidades rurais na Etiópia. O projeto visa fornecer uma identidade digital verificável para cidadãos que não possuem documentação tradicional, permitindo-lhes acesso a serviços financeiros, registros de propriedade e votação. A iniciativa é um dos maiores testes de caso de uso real para a tecnologia blockchain em impacto social.',
+      ativoTag: 'ADA', // <-- ADICIONADO
     ),
   ];
 }
