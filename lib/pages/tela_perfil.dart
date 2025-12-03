@@ -3,15 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 import 'package:pedropaulo_cryptos/services/auth_service.dart';
 import 'package:pedropaulo_cryptos/services/firestore_service.dart';
-import 'dart:io'; 
-import 'package:flutter/foundation.dart' show kIsWeb; // Para verificar se é Web
-import 'package:image_picker/image_picker.dart';
 import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart';
+import 'dart:io'; 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart'; // <--- PACOTE FALTANTE
+import 'camera_screen.dart';        // <--- PACOTE FALTANTE (Assumindo que este é o caminho)
 
-// Certifique-se que showCustomSnackbar e encontraUsuario estão acessíveis
-// Se showCustomSnackbar não estiver definido aqui, ele deve estar em tela_login.dart (e importado)
-// Se encontraUsuario não estiver definido, ele deve ser acessado via _usuarioRepositorio.
-// Assumindo que encontraUsuario foi movido para o Repositório, como planejado.
+// Assumindo que showCustomSnackbar está acessível
 
 class TelaPerfil extends StatefulWidget {
   final String uid;
@@ -30,6 +29,7 @@ class TelaPerfil extends StatefulWidget {
 }
 
 class _TelaPerfilState extends State<TelaPerfil> {
+  // ... (Controllers, Services e Repositórios existentes)
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
 
@@ -39,76 +39,128 @@ class _TelaPerfilState extends State<TelaPerfil> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false; 
 
-  // Instâncias para a funcionalidade de imagem
   final ImagePicker _picker = ImagePicker();
   final UsuarioRepositorio _usuarioRepositorio = UsuarioRepositorio();
+  
+  // VARIAVEIS DO PACOTE CAMERA (NOVAS)
+  CameraDescription? _firstCamera;
+  bool _isCameraReady = false;
 
   // ------------------------------------------------------------------
-  // METÓDOS DE IMAGEM E PERSISTÊNCIA LOCAL (NOVOS)
+  // ESTADO DO WIDGET E MÉTODOS DE CÂMERA
   // ------------------------------------------------------------------
 
-  Future<void> _pickAndSaveLocalImage(ImageSource source) async {
-  if (_isLoading) return;
-  setState(() => _isLoading = true);
-
-  XFile? pickedFile;
-  String errorMessage = '';
-
-  try {
-    pickedFile = await _picker.pickImage(source: source);
-
-    if (pickedFile == null) {
-        showCustomSnackbar(context, 'Seleção cancelada ou falha na leitura.', isError: true);
-    }
-
-  } on Exception catch (e) {
-    if (e.toString().contains('No file selected') || e.toString().contains('cameraDelegate')) {
-        errorMessage = 'Seleção cancelada, ou acesso à câmera não suportado neste ambiente.';
-    } else {
-        errorMessage = 'Erro ao processar imagem: ${e.toString()}';
-    }
+  @override
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController(text: widget.userData['username']);
+    _emailController = TextEditingController(text: widget.userData['email']);
+    
+    _initializeCamera(); // CHAMA A INICIALIZAÇÃO DA WEBCAM
   }
 
-  if (errorMessage.isNotEmpty || pickedFile == null) {
-      if (errorMessage.isNotEmpty) {
-          showCustomSnackbar(context, errorMessage, isError: true);
+  // NOVO MÉTODO: Inicializa o pacote camera e encontra a webcam
+  Future<void> _initializeCamera() async {
+    try {
+      final cameras = await availableCameras();
+      
+      // ADICIONE ESTE PRINT PARA VER SE CÂMERAS FORAM ENCONTRADAS
+      print('CÂMERAS ENCONTRADAS: ${cameras.length}'); 
+
+      if (cameras.isNotEmpty) {
+        _firstCamera = cameras.first;
       }
       if (mounted) {
-          setState(() => _isLoading = false);
+        setState(() {
+          _isCameraReady = true;
+        });
       }
-      return;
-  }
-
-  final String localPath = pickedFile!.path;
-  final String userEmail = widget.userData['email'];
-
-  final success = _usuarioRepositorio.updateProfileImagePath(
-    email: userEmail, 
-    newPath: localPath,
-  );
-
-  if (success) {
-    setState(() {
-      widget.userData['profileImagePath'] = localPath; 
-      widget.onProfileUpdated();
-      showCustomSnackbar(context, 'Foto de perfil salva localmente!');
-    });
-  } else {
-    showCustomSnackbar(context, 'Erro: Usuário não encontrado no repositório.', isError: true);
-  }
-
-  if (mounted) {
-    setState(() => _isLoading = false);
-  }
+    } catch (e) {
+      // ESTE É O ERRO CRÍTICO, VAMOS LOGAR PARA SABER A CAUSA REAL
+      print('ERRO CRÍTICO (CAMERA PACKAGE): $e'); 
+      if (mounted) {
+        setState(() {
+          _isCameraReady = false;
+        });
+      }
+    }
 }
 
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickAndSaveLocalImage(ImageSource source) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    XFile? pickedFile;
+    String errorMessage = '';
+
+    try {
+        pickedFile = await _picker.pickImage(source: source);
+    } catch (e) {
+        // ... (Tratamento de erro de câmera/galeria)
+        if (e.toString().contains('cameraDelegate') || e.toString().contains('MissingPluginException')) {
+            errorMessage = 'Acesso à câmera indisponível neste ambiente. Por favor, use a Galeria.';
+        } else {
+            errorMessage = 'Erro ao processar imagem: ${e.toString()}';
+        }
+    }
+
+    // 1. Tratamento de Erro/Cancelamento
+    if (errorMessage.isNotEmpty) {
+        showCustomSnackbar(context, errorMessage, isError: true);
+    } else if (pickedFile == null) {
+        showCustomSnackbar(context, 'Seleção cancelada.');
+    } else {
+        // 2. Processamento da Imagem Escolhida (SUCESSO)
+        _processPickedImage(pickedFile.path); 
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // NOVO MÉTODO: Centraliza o salvamento no Repositório
+  void _processPickedImage(String localPath) {
+    final String userEmail = widget.userData['email'];
+
+    final success = _usuarioRepositorio.updateProfileImagePath(
+      email: userEmail, 
+      newPath: localPath,
+    );
+
+    if (success) {
+      setState(() {
+        widget.userData['profileImagePath'] = localPath; 
+        widget.onProfileUpdated();
+        showCustomSnackbar(context, 'Foto de perfil salva localmente!');
+      });
+    } else {
+      showCustomSnackbar(context, 'Erro: Usuário não encontrado no repositório.', isError: true);
+    }
+  }
+
+
   void _mostrarDialogSelecaoFoto() {
+    // Verifica se o pacote 'camera' encontrou uma câmera/webcam
+    if (!_isCameraReady) {
+      showCustomSnackbar(context, 'Aguarde, inicializando câmera... (Ou use a Galeria).', isError: true);
+      // Se não estiver pronto, continua para o modal, mas a opção Câmera estará incompleta.
+    }
+    
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return SafeArea(
           child: Wrap(
             children: <Widget>[
+              // 1. GALERIA (USA ImagePicker)
               ListTile(
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Galeria / Arquivos'),
@@ -117,12 +169,29 @@ class _TelaPerfilState extends State<TelaPerfil> {
                   _pickAndSaveLocalImage(ImageSource.gallery);
                 },
               ),
+              // 2. CÂMERA (USA PACOTE 'CAMERA' DEDICADO - Se o _firstCamera foi encontrado)
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Câmera (Apenas Mobile/Emulador)'),
-                onTap: () {
+                title: const Text('Câmera (Webcam)'),
+                onTap: () async {
                   Navigator.of(context).pop();
-                  _pickAndSaveLocalImage(ImageSource.camera);
+                  
+                  // Verifica se a câmera foi inicializada com sucesso e se há uma câmera.
+                  if (_firstCamera != null) {
+                    final String? imagePath = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => CameraScreen(camera: _firstCamera!),
+                      ),
+                    );
+
+                    // Processa o resultado retornado do CameraScreen
+                    if (imagePath != null) {
+                      _processPickedImage(imagePath);
+                    }
+                  } else {
+                    // Mensagem clara: A câmera não está disponível.
+                    showCustomSnackbar(context, 'Câmera não disponível. Verifique as permissões do navegador ou use a Galeria.', isError: true);
+                  }
                 },
               ),
             ],
@@ -132,30 +201,8 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
-  // ------------------------------------------------------------------
-  // ESTADO DO WIDGET E MÉTODOS DE AUTENTICAÇÃO (EXISTENTES)
-  // ------------------------------------------------------------------
-
-  @override
-  void initState() {
-    super.initState();
-    _usernameController = TextEditingController(text: widget.userData['username']);
-    _emailController = TextEditingController(text: widget.userData['email']);
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
+  // --- MÉTODOS DE AUTENTICAÇÃO EXISTENTES ---
   
-  // O seu método 'updateProfileImagePath' duplicado foi REMOVIDO daqui 
-  // pois ele pertence ao UsuarioRepositorio.
-
-  // O seu método '_pickAndSaveLocalImage' duplicado foi REMOVIDO daqui 
-  // pois a versão correta e funcional está no topo.
-
   void _salvarAlteracoes() async {
     if (!_formKey.currentState!.validate()) {
       return; 

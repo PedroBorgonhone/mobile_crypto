@@ -37,6 +37,8 @@ dependencies:
   motion_tab_bar_v2: ^0.4.0
   http: ^1.2.1
   image_picker: ^1.2.0
+  camera: ^0.10.5+10
+  path_provider: ^2.1.2
   firebase_core: 
   firebase_auth: 
   cloud_firestore: 

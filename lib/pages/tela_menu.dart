@@ -42,11 +42,13 @@ class _TelaMenuState extends State<TelaMenu> {
 
     final noticias = await _firestoreService.getNoticiasFiltradas(todasSiglas);
 
-    setState(() {
-      _noticiasDaCarteira = noticias;
-      _noticiasExibidas = noticias;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _noticiasDaCarteira = noticias;
+        _noticiasExibidas = noticias;
+        _isLoading = false;
+      });
+    }
   }
   
   void _filtrarNoticiasPorPesquisa() {
