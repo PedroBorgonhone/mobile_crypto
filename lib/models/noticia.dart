@@ -1,4 +1,3 @@
-// lib/models/noticia.dart
 import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 
 class Noticia {
@@ -8,7 +7,7 @@ class Noticia {
   final String imagemAsset;
   final PrazoIndicador prazo;
   final String conteudo;
-  final String ativoTag; // <-- O campo que faltava
+  final String ativoTag;
 
   Noticia({
     required this.fonte,
@@ -17,18 +16,16 @@ class Noticia {
     required this.imagemAsset,
     required this.prazo,
     required this.conteudo,
-    required this.ativoTag, // <-- O parâmetro que faltava
+    required this.ativoTag,
   });
 
-  // A FUNÇÃO "toMap()" QUE FALTAVA
-  // Converte este objeto Noticia em um Mapa (para o Firestore entender)
   Map<String, dynamic> toMap() {
     return {
       'fonte': fonte,
       'titulo': titulo,
       'subtitulo': subtitulo,
       'imagemAsset': imagemAsset,
-      'prazo': prazo.name, // Salva o enum como string (ex: 'longo')
+      'prazo': prazo.name,
       'conteudo': conteudo,
       'ativoTag': ativoTag,
     };

@@ -5,25 +5,18 @@ class UsuarioRepositorio {
   static final UsuarioRepositorio _instancia = UsuarioRepositorio._interno();
   factory UsuarioRepositorio() => _instancia;
 
+  final Map<String, Usuario> _usuarios = {};
+
+  Usuario? _usuarioLogado;
+  Usuario? get usuarioLogado => _usuarioLogado;
+
   UsuarioRepositorio._interno() {
-    // Usuário teste
     registrarUsuario(
       usuario: 'teste',
       email: 'teste@gmail.com',
       senha: '123',
     );
   }
-
-  // Banco de dados em memória
-
-  final Map<String, Usuario> _usuarios = {};
-
-  // Usuario Logado
-
-  Usuario? _usuarioLogado;
-  Usuario? get usuarioLogado => _usuarioLogado;
-
-  // Função Registrar
 
   bool registrarUsuario({
     required String usuario,
@@ -47,8 +40,6 @@ class UsuarioRepositorio {
     return true; // Registro bem-sucedido
   }
 
-  // Função Login
-
   Usuario? login({
     required String usuario,
     required String senha,
@@ -61,8 +52,6 @@ class UsuarioRepositorio {
     return null;
   }
 
-  // Função atualizar
-
   Usuario? atualizarUsuario({
     required String usuarioAntigo,
     required String novoUsuario,
@@ -74,7 +63,6 @@ class UsuarioRepositorio {
       return null;
     }
 
-    // Verifica nome
     if (usuarioAntigo != novoUsuario && _usuarios.containsKey(novoUsuario)) {
       return null;
     }
@@ -101,8 +89,6 @@ class UsuarioRepositorio {
     return usuarioAux;
   }
 
-  // Função Recuperar Senha
-
   Usuario? encontraUsuario(String email) {
     try {
       return _usuarios.values.firstWhere((usuario) => usuario.email == email);
@@ -110,8 +96,6 @@ class UsuarioRepositorio {
       return null;
     }
   }
-
-  // Função Troca Senha
 
   bool trocaSenha({
     required String email,
@@ -133,5 +117,45 @@ class UsuarioRepositorio {
       return true;
     }
     return false;
+  }
+
+  bool updateProfileImagePath({
+    required String email, 
+    required String newPath,
+  }) {
+    final usuarioAux = encontraUsuario(email);
+
+    if (usuarioAux != null) {
+      usuarioAux.profileImagePath = newPath;
+      print('Caminho da imagem atualizado para o usuário ${usuarioAux.usuario}');
+      
+      return true;
+    }
+    return false;
+  }
+
+  void addUserLoginInfo({required String email, required String username}) {
+    // 1. Verifica se o usuário já existe usando o método encontraUsuario
+    final Usuario? usuarioExistente = encontraUsuario(email); // <--- CORREÇÃO AQUI
+
+    if (usuarioExistente == null) {
+        // Se não existir (a busca retornou null), cria um novo objeto Usuario no mock
+        
+        final novoUsuario = Usuario(
+            usuario: username,
+            email: email,
+            senha: 'FirebaseAuth', // Senha Mockada
+            profileImagePath: null,
+        );
+        
+        // O UsuarioRepositorio usa o username como chave primária no map _usuarios
+        _usuarios[username] = novoUsuario; 
+        print('Sincronizado novo usuário Firebase: $username');
+
+    } else {
+        // Se existir, apenas atualiza o username (e-mail e senha mockada permanecem)
+        usuarioExistente.usuario = username;
+        print('Usuário Firebase $username atualizado no Repositório.');
+    }
   }
 }

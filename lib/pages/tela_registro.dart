@@ -1,11 +1,8 @@
-// lib/pages/tela_registro.dart
-
 import 'package:flutter/material.dart';
-// 1. IMPORTAR OS NOVOS SERVIÇOS
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pedropaulo_cryptos/services/auth_service.dart'; // Nosso serviço de Auth
-import 'package:pedropaulo_cryptos/services/firestore_service.dart'; // NOSSO NOVO SERVIÇO DE DB
-import 'package:pedropaulo_cryptos/pages/tela_login.dart'; // Para o showCustomSnackbar
+import 'package:pedropaulo_cryptos/services/auth_service.dart';
+import 'package:pedropaulo_cryptos/services/firestore_service.dart';
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
 class TelaRegistro extends StatefulWidget {
   const TelaRegistro({super.key});
@@ -20,11 +17,9 @@ class _TelaRegistroState extends State<TelaRegistro> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // 2. INSTANCIAR AMBOS OS SERVIÇOS
   final _authService = AuthService();
-  final _firestoreService = FirestoreService(); // <- ADICIONADO
+  final _firestoreService = FirestoreService();
 
-  // (novo) Estado de carregamento para o botão
   bool _isLoading = false;
 
   @override
@@ -36,14 +31,12 @@ class _TelaRegistroState extends State<TelaRegistro> {
     super.dispose();
   }
 
-  // 3. ATUALIZAR A FUNÇÃO DE REGISTRO
   void _register() async {
     final username = _usernameController.text.trim(); 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validações locais (continuam iguais)
     if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       showCustomSnackbar(context, 'Por favor, preencha todos os campos.', isError: true);
       return;
@@ -52,27 +45,21 @@ class _TelaRegistroState extends State<TelaRegistro> {
       showCustomSnackbar(context, 'As senhas não coincidem.', isError: true);
       return;
     }
-    if (password.length < 6) { // Ajustado para 6, o mínimo do Firebase
+    if (password.length < 6) {
       showCustomSnackbar(context, 'A senha deve ter pelo menos 6 caracteres.', isError: true);
       return;
     }
 
-    // Ativa o loading
     setState(() => _isLoading = true);
 
-    // --- NOVA LÓGICA COM FIREBASE (AUTH + FIRESTORE) ---
     try {
-      // 4. PASSO 1: Criar usuário na "Portaria" (Auth)
       User? newUser = await _authService.registerWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // 5. Se deu certo (usuário não é nulo)
       if (newUser != null) {
         
-        // 6. PASSO 2: Salvar dados extras na "Pasta" (Firestore)
-        // Usamos o UID (crachá) do usuário como link!
         await _firestoreService.saveUserData(
           uid: newUser.uid,
           username: username,
@@ -81,12 +68,10 @@ class _TelaRegistroState extends State<TelaRegistro> {
         
         showCustomSnackbar(context, 'Registro bem-sucedido! Faça login agora.');
         
-        // 7. Volta para a tela de Login
         if (mounted) Navigator.pop(context);
       }
 
     } on FirebaseAuthException catch (e) {
-      // 8. Trata erros específicos do Firebase Auth
       String errorMessage = 'Ocorreu um erro no registro.';
       if (e.code == 'weak-password') {
         errorMessage = 'A senha é muito fraca. Use pelo menos 6 caracteres.';
@@ -98,17 +83,14 @@ class _TelaRegistroState extends State<TelaRegistro> {
       showCustomSnackbar(context, errorMessage, isError: true);
       
     } catch (e) {
-      // 9. Trata qualquer outro erro (ex: erro do Firestore)
       showCustomSnackbar(context, 'Erro desconhecido: $e', isError: true);
     }
 
-    // Desativa o loading
     setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    // O seu 'build' (parte visual) só tem uma pequena mudança no botão:
     
     return Scaffold(
       body: Center(
@@ -121,7 +103,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  // ... (Seu texto de 'Registrar-se', etc. continuam aqui)
                   const Text(
                     'Registrar-se',
                     style: TextStyle(
@@ -131,7 +112,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
                     ),
                   ),
 
-                  // Nome de Usuário
                   const SizedBox(height: 26),
                   TextField(
                     controller: _usernameController,
@@ -144,7 +124,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
                         border: OutlineInputBorder()),
                   ),
 
-                  // Email do Usuário
                   const SizedBox(height: 26),
                   TextField(
                     controller: _emailController,
@@ -158,7 +137,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
                         border: OutlineInputBorder()),
                   ),
 
-                  // Senha do Usuário
                   const SizedBox(height: 26),
                   TextField(
                     controller: _passwordController,
@@ -172,7 +150,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
                         border: OutlineInputBorder()),
                   ),
 
-                  // Confirmar Senha do Usuário
                   const SizedBox(height: 26),
                   TextField(
                     controller: _confirmPasswordController,
@@ -186,13 +163,11 @@ class _TelaRegistroState extends State<TelaRegistro> {
                         border: OutlineInputBorder()),
                   ),
 
-                  // Botão de Registro (MODIFICADO)
                   const SizedBox(height: 32.0),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      // 10. Desativa o botão se _isLoading for true
                       onPressed: _isLoading ? null : _register,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF307B8C),
@@ -200,7 +175,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      // 11. Mostra um 'loading' ou o texto
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
@@ -212,8 +186,6 @@ class _TelaRegistroState extends State<TelaRegistro> {
                             ),
                     ),
                   ),
-
-                  // Botão de Cancelar
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {

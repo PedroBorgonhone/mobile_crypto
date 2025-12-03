@@ -14,16 +14,6 @@ class NoticiaRepositorio {
       conteudo: 'O Bitcoin (BTC) continua a solidificar sua posição como uma reserva de valor digital, atraindo a atenção de grandes investidores institucionais. Em um cenário de crescente inflação global e instabilidade nos mercados tradicionais, a criptomoeda é vista como uma forma de proteção de capital, similar ao papel historicamente desempenhado pelo ouro. Analistas apontam que a descentralização e a oferta limitada do Bitcoin são fatores-chave para essa percepção de segurança a longo prazo.',
       ativoTag: 'BTC', // <-- ADICIONADO
     ),
-
-    Noticia(
-      fonte: 'Indústria & Energia Global',
-      titulo: 'WEG Anuncia Expansão e Fecha Contrato Bilionário para Parque Eólico na Europa',
-      subtitulo: 'Gigante brasileira consolida liderança no setor de energia renovável com novo projeto que fornecerá energia limpa.',
-      imagemAsset: 'images/weg_news.png',
-      prazo: PrazoIndicador.longo,
-      conteudo: 'A WEG, multinacional brasileira de equipamentos elétricos, anunciou hoje a assinatura de um contrato de 2 bilhões de euros para o fornecimento de turbinas para um novo parque eólico offshore no Mar do Norte. O projeto reforça a posição da empresa como uma líder global na transição energética e tem capacidade para fornecer energia limpa para mais de 500 mil residências, um marco para a indústria nacional.',
-      ativoTag: 'WEGE3', // <-- ADICIONADO
-    ),
     
     Noticia(
       fonte: 'Tech Stocks Today',

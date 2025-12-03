@@ -1,10 +1,17 @@
-// lib/pages/tela_perfil.dart
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pedropaulo_cryptos/pages/tela_login.dart'; // Para o snackbar e navegação
-import 'package:pedropaulo_cryptos/services/auth_service.dart'; // Para o Logout
-import 'package:pedropaulo_cryptos/services/firestore_service.dart'; // Para Salvar
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
+import 'package:pedropaulo_cryptos/services/auth_service.dart';
+import 'package:pedropaulo_cryptos/services/firestore_service.dart';
+import 'dart:io'; 
+import 'package:flutter/foundation.dart' show kIsWeb; // Para verificar se é Web
+import 'package:image_picker/image_picker.dart';
+import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart';
+
+// Certifique-se que showCustomSnackbar e encontraUsuario estão acessíveis
+// Se showCustomSnackbar não estiver definido aqui, ele deve estar em tela_login.dart (e importado)
+// Se encontraUsuario não estiver definido, ele deve ser acessado via _usuarioRepositorio.
+// Assumindo que encontraUsuario foi movido para o Repositório, como planejado.
 
 class TelaPerfil extends StatefulWidget {
   final String uid;
@@ -32,6 +39,103 @@ class _TelaPerfilState extends State<TelaPerfil> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false; 
 
+  // Instâncias para a funcionalidade de imagem
+  final ImagePicker _picker = ImagePicker();
+  final UsuarioRepositorio _usuarioRepositorio = UsuarioRepositorio();
+
+  // ------------------------------------------------------------------
+  // METÓDOS DE IMAGEM E PERSISTÊNCIA LOCAL (NOVOS)
+  // ------------------------------------------------------------------
+
+  Future<void> _pickAndSaveLocalImage(ImageSource source) async {
+  if (_isLoading) return;
+  setState(() => _isLoading = true);
+
+  XFile? pickedFile;
+  String errorMessage = '';
+
+  try {
+    pickedFile = await _picker.pickImage(source: source);
+
+    if (pickedFile == null) {
+        showCustomSnackbar(context, 'Seleção cancelada ou falha na leitura.', isError: true);
+    }
+
+  } on Exception catch (e) {
+    if (e.toString().contains('No file selected') || e.toString().contains('cameraDelegate')) {
+        errorMessage = 'Seleção cancelada, ou acesso à câmera não suportado neste ambiente.';
+    } else {
+        errorMessage = 'Erro ao processar imagem: ${e.toString()}';
+    }
+  }
+
+  if (errorMessage.isNotEmpty || pickedFile == null) {
+      if (errorMessage.isNotEmpty) {
+          showCustomSnackbar(context, errorMessage, isError: true);
+      }
+      if (mounted) {
+          setState(() => _isLoading = false);
+      }
+      return;
+  }
+
+  final String localPath = pickedFile!.path;
+  final String userEmail = widget.userData['email'];
+
+  final success = _usuarioRepositorio.updateProfileImagePath(
+    email: userEmail, 
+    newPath: localPath,
+  );
+
+  if (success) {
+    setState(() {
+      widget.userData['profileImagePath'] = localPath; 
+      widget.onProfileUpdated();
+      showCustomSnackbar(context, 'Foto de perfil salva localmente!');
+    });
+  } else {
+    showCustomSnackbar(context, 'Erro: Usuário não encontrado no repositório.', isError: true);
+  }
+
+  if (mounted) {
+    setState(() => _isLoading = false);
+  }
+}
+
+  void _mostrarDialogSelecaoFoto() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galeria / Arquivos'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickAndSaveLocalImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Câmera (Apenas Mobile/Emulador)'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickAndSaveLocalImage(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // ESTADO DO WIDGET E MÉTODOS DE AUTENTICAÇÃO (EXISTENTES)
+  // ------------------------------------------------------------------
+
   @override
   void initState() {
     super.initState();
@@ -45,8 +149,13 @@ class _TelaPerfilState extends State<TelaPerfil> {
     _emailController.dispose();
     super.dispose();
   }
+  
+  // O seu método 'updateProfileImagePath' duplicado foi REMOVIDO daqui 
+  // pois ele pertence ao UsuarioRepositorio.
 
-  // FUNÇÃO _salvarAlteracoes (Atualizada para usar o callback)
+  // O seu método '_pickAndSaveLocalImage' duplicado foi REMOVIDO daqui 
+  // pois a versão correta e funcional está no topo.
+
   void _salvarAlteracoes() async {
     if (!_formKey.currentState!.validate()) {
       return; 
@@ -61,7 +170,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
 
     try {
       if (emailMudou) {
-        // OPERAÇÃO SENSÍVEL: Pede a senha
         await _mostrarDialogReautenticacaoEmail(novoUsername, novoEmail);
         showCustomSnackbar(context, 'Sucesso! Verifique seu *novo* e-mail para confirmar a mudança.');
         
@@ -72,7 +180,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
         );
 
       } else {
-        // OPERAÇÃO SEGURA: Só mudou o username
         await _firestoreService.updateUserData(
           uid: widget.uid,
           newUsername: novoUsername,
@@ -90,7 +197,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
       }
       showCustomSnackbar(context, msg, isError: true);
     } catch (e) {
-      // Captura o "Operação cancelada" do dialog
       showCustomSnackbar(context, 'Erro: ${e.toString()}', isError: true);
     }
 
@@ -99,7 +205,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
     }
   }
 
-  // (A função de re-autenticação do Email)
   Future<void> _mostrarDialogReautenticacaoEmail(String novoUsername, String novoEmail) async {
     final passwordController = TextEditingController();
     
@@ -148,7 +253,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
 
                 } on FirebaseAuthException catch (e) {
                   if (mounted) Navigator.of(context).pop();
-                  throw e;
+                  rethrow;
                 }
               },
             ),
@@ -158,7 +263,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
-  // --- NOVA FUNÇÃO (Pop-up de Alterar Senha) ---
   void _mostrarDialogAlterarSenha() {
     final oldPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
@@ -243,7 +347,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
-  // --- NOVA FUNÇÃO (Pop-up de Excluir Conta) ---
   void _mostrarDialogExcluirConta() {
     final passwordController = TextEditingController();
     
@@ -284,16 +387,12 @@ class _TelaPerfilState extends State<TelaPerfil> {
                 }
 
                 try {
-                  // 1. Re-autentica
                   await _authService.reauthenticateWithPassword(password);
                   
-                  // 2. Deleta os dados do "Arquivo" (Firestore)
                   await _firestoreService.deleteUserData(widget.uid);
                   
-                  // 3. Deleta o usuário da "Portaria" (Auth)
                   await _authService.deleteAccount();
                   
-                  // 4. Manda de volta para o Login
                   if (mounted) {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const TelaLogin()),
@@ -317,7 +416,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
-  // (O seu método de Logout, Build e InputDecoration continuam iguais)
   void _logout() async {
     await _authService.signOut();
     if (!mounted) return;
@@ -327,8 +425,15 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
+  // ------------------------------------------------------------------
+  // WIDGET (BUILD)
+  // ------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
+    // Pega o caminho do Map de dados (se foi salvo pelo Repositório)
+    final String? imagePath = widget.userData['profileImagePath'];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Perfil'),
@@ -350,25 +455,46 @@ class _TelaPerfilState extends State<TelaPerfil> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // ... (Foto, campos de username e email... tudo igual)
+              
+              // NOVO WIDGET: Círculo Clicável para a Foto de Perfil
               Center(
-                child: Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white54, width: 3),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    size: 100,
-                    color: Colors.white70,
+                child: GestureDetector(
+                  onTap: _mostrarDialogSelecaoFoto, // Chama o seletor
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white54, width: 3),
+                    ),
+                    child: ClipOval( 
+                      child: imagePath != null && imagePath.isNotEmpty
+                        // Verifica se é Web ou Desktop/Mobile para carregar o arquivo
+                        ? kIsWeb 
+                          ? Image.network(imagePath, fit: BoxFit.cover,) // Web usa URL/Blob (image_picker path)
+                          : Image.file( // Desktop/Mobile usa o caminho do arquivo local
+                              File(imagePath), 
+                              fit: BoxFit.cover,
+                              // Fallback visual
+                              errorBuilder: (context, error, stackTrace) => const Icon(
+                                Icons.person, size: 100, color: Colors.white70,
+                              ),
+                            )
+                        // Ícone padrão se não houver foto
+                        : const Icon( 
+                            Icons.person,
+                            size: 100,
+                            color: Colors.white70,
+                          ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 40),
 
+              // ... (Campos de formulário e botões de ação continuam abaixo)
+              
               TextFormField(
                 controller: _usernameController,
                 style: const TextStyle(color: Colors.white),
@@ -425,7 +551,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
               const Divider(color: Colors.white24),
               const SizedBox(height: 20),
               
-              // --- NOVO BOTÃO (Alterar Senha) ---
               OutlinedButton(
                 onPressed: _mostrarDialogAlterarSenha,
                 style: OutlinedButton.styleFrom(
@@ -447,7 +572,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
               
               const SizedBox(height: 12),
               
-              // --- NOVO BOTÃO (Excluir Conta) ---
               OutlinedButton(
                 onPressed: _mostrarDialogExcluirConta,
                 style: OutlinedButton.styleFrom(

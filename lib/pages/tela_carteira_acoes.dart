@@ -17,7 +17,6 @@ class TelaCarteiraAcoes extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: ElevatedButton(
             onPressed: () {
-              // Ações para adicionar ações (futuramente)
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),

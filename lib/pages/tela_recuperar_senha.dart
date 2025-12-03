@@ -59,8 +59,6 @@ class _TelaRecuperarSenhaState extends State<TelaRecuperarSenha> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
 
-                // Texto de Recuperação de Senha
-
                 const Text('Redefinição de Senha!',
                   style: TextStyle(
                     fontSize: 26,
@@ -68,8 +66,6 @@ class _TelaRecuperarSenhaState extends State<TelaRecuperarSenha> {
                     color: Color(0xFFF2EBDF),
                   ),
                 ),
-
-                // Campo explicativo
 
                 const SizedBox(height: 6),
                 const Text('Insira seu email para receber o link de redefinição de senha',
@@ -79,8 +75,6 @@ class _TelaRecuperarSenhaState extends State<TelaRecuperarSenha> {
                     color: Color(0xFFF2EBDF),
                   ),
                 ),
-
-                // Campo de Email
 
                 const SizedBox(height: 32.0),
                 TextField(
@@ -92,8 +86,6 @@ class _TelaRecuperarSenhaState extends State<TelaRecuperarSenha> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-
-                // Botão Enviar
 
                 const SizedBox(height: 32.0),
                 ElevatedButton(
@@ -112,8 +104,6 @@ class _TelaRecuperarSenhaState extends State<TelaRecuperarSenha> {
                     ),
                   ),
                 ),
-
-                // Botão Cancelar
 
                 const SizedBox(height: 20),
                 TextButton(

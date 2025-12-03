@@ -1,14 +1,9 @@
-// lib/pages/tela_menu.dart
-
 import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/models/noticia.dart';
 import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
-// 1. IMPORTAR OS SERVIÇOS
 import 'package:pedropaulo_cryptos/services/firestore_service.dart';
-// O import da 'tela_login.dart' (para o snackbar) foi removido pois não é mais necessário
 
 class TelaMenu extends StatefulWidget {
-  // RECEBER OS DADOS DO USUÁRIO (A CARTEIRA)
   final Map<String, dynamic> userData;
   
   const TelaMenu({super.key, required this.userData});
@@ -20,20 +15,16 @@ class TelaMenu extends StatefulWidget {
 class _TelaMenuState extends State<TelaMenu> {
   final _searchController = TextEditingController();
   
-  // INSTANCIAR O SERVIÇO
   final FirestoreService _firestoreService = FirestoreService();
   
-  // LISTAS PARA CONTROLAR AS NOTÍCIAS
-  List<Noticia> _noticiasDaCarteira = []; // A lista vinda do banco
-  List<Noticia> _noticiasExibidas = []; // A lista filtrada pela pesquisa
+  List<Noticia> _noticiasDaCarteira = [];
+  List<Noticia> _noticiasExibidas = [];
   
-  bool _isLoading = true; // Começa carregando
-
+  bool _isLoading = true;
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_filtrarNoticiasPorPesquisa);
-    // CHAMA A CONSULTA AO FIRESTORE (Automaticamente)
     _carregarNoticiasFiltradas();
   }
 
@@ -44,17 +35,13 @@ class _TelaMenuState extends State<TelaMenu> {
     super.dispose();
   }
 
-  // FUNÇÃO DE CARREGAMENTO (Sua ideia!)
   void _carregarNoticiasFiltradas() async {
-    // Pega as siglas da carteira que o "Pai" (motion_bar) nos deu
     final criptoSymbols = List<String>.from(widget.userData['carteiraCripto'] ?? []);
     final acaoSymbols = List<String>.from(widget.userData['carteiraAcoes'] ?? []);
-    final todasSiglas = [...criptoSymbols, ...acaoSymbols]; // Junta as duas listas
+    final todasSiglas = [...criptoSymbols, ...acaoSymbols];
 
-    // Chama o serviço para buscar no Firestore
     final noticias = await _firestoreService.getNoticiasFiltradas(todasSiglas);
 
-    // Atualiza a tela
     setState(() {
       _noticiasDaCarteira = noticias;
       _noticiasExibidas = noticias;
@@ -62,7 +49,6 @@ class _TelaMenuState extends State<TelaMenu> {
     });
   }
   
-  // FUNÇÃO DE PESQUISA
   void _filtrarNoticiasPorPesquisa() {
     final query = _searchController.text.toLowerCase();
     
@@ -81,8 +67,6 @@ class _TelaMenuState extends State<TelaMenu> {
       }
     });
   }
-
-  // (O resto do seu código: _showDetailsDialog e _buildPrazoChip)
   
   void _showDetailsDialog(Noticia noticia) {
     showDialog(
@@ -155,7 +139,6 @@ class _TelaMenuState extends State<TelaMenu> {
     );
   }
 
-  // --- BUILD DA TELA ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,9 +148,6 @@ class _TelaMenuState extends State<TelaMenu> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        
-        // --- O BOTÃO "actions" FOI REMOVIDO DAQUI ---
-        
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -190,7 +170,6 @@ class _TelaMenuState extends State<TelaMenu> {
             ),
             const SizedBox(height: 24),
             Expanded(
-              // (A lógica de loading e lista vazia)
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: Colors.white))
                   : _noticiasExibidas.isEmpty

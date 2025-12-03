@@ -1,15 +1,12 @@
-// lib/pages/tela_login.dart
-
 import 'package:flutter/material.dart';
-// 1. IMPORTAR OS NOVOS SERVIÇOS
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:pedropaulo_cryptos/services/auth_service.dart'; // Nosso serviço
-
+import 'package:pedropaulo_cryptos/services/auth_service.dart';
 import 'package:pedropaulo_cryptos/repositories/motion_bar_repositorio.dart';
+import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart'; // <-- NOVO IMPORT
 import 'tela_recuperar_senha.dart';
 import 'tela_registro.dart';
-// import '../repositories/usuario_repositorio.dart'; // <- REMOVIDO
 
+// [showCustomSnackbar function remains the same]
 void showCustomSnackbar(BuildContext context, String message, {bool isError = false}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -29,16 +26,14 @@ class TelaLogin extends StatefulWidget {
 }
 
 class _TelaLoginState extends State<TelaLogin> {
-  // 2. MUDAR 'USERNAME' PARA 'EMAIL'
-  // final _usernameController = TextEditingController(); // <- REMOVIDO
-  final _emailController = TextEditingController(); // <- ADICIONADO
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   
-  // 3. TROCAR O REPOSITÓRIO ANTIGO PELO NOVO SERVIÇO
-  // final _userRepository = UsuarioRepositorio(); // <- REMOVIDO
-  final _authService = AuthService(); // <- ADICIONADO
+  // Instância do repositório para sincronização
+  final UsuarioRepositorio _usuarioRepositorio = UsuarioRepositorio(); // <-- NOVO
 
-  bool _isLoading = false; // Estado de loading
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -47,10 +42,8 @@ class _TelaLoginState extends State<TelaLogin> {
     super.dispose();
   }
 
-  // 4. ATUALIZAR A FUNÇÃO DE LOGIN
   void _login() async {
-    // final username = _usernameController.text.trim(); // <- REMOVIDO
-    final email = _emailController.text.trim(); // <- ADICIONADO
+    final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
@@ -60,16 +53,26 @@ class _TelaLoginState extends State<TelaLogin> {
 
     setState(() => _isLoading = true);
 
-    // --- NOVA LÓGICA COM FIREBASE ---
     try {
-      // 5. Tenta fazer login com o serviço
       final user = await _authService.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // 6. Se deu certo (usuário não é nulo)
       if (user != null) {
+        // --- INÍCIO DA MODIFICAÇÃO CRÍTICA AQUI ---
+        // 1. Sincroniza o usuário logado do Firebase com o Repositório/H2 em memória.
+        // Assumimos que o username está armazenado no displayName do Firebase User
+        // ou que ele será obtido no MainTabNavigator. Para o login, usaremos um placeholder
+        // seguro, se o displayName for null, ou o email.
+        final String username = user.displayName ?? user.email ?? 'Usuário Sem Nome';
+        
+        _usuarioRepositorio.addUserLoginInfo(
+            email: user.email!, // O e-mail nunca será null no Firebase Auth se o user for != null
+            username: username,
+        );
+        // --- FIM DA MODIFICAÇÃO CRÍTICA ---
+        
         showCustomSnackbar(context, 'Login bem-sucedido! Bem-vindo.');
         
         if (mounted) {
@@ -80,7 +83,6 @@ class _TelaLoginState extends State<TelaLogin> {
         }
       }
     } on FirebaseAuthException catch (e) {
-      // 7. Trata erros específicos do Firebase
       String errorMessage = 'Erro ao fazer login.';
       if (e.code == 'invalid-email') {
         errorMessage = 'O formato do e-mail é inválido.';
@@ -109,7 +111,6 @@ class _TelaLoginState extends State<TelaLogin> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                // ... (Texto de 'Bem Vindo' continua igual)
                 const Text('Bem Vindo!',
                   style: TextStyle(
                     fontSize: 26,
@@ -125,22 +126,20 @@ class _TelaLoginState extends State<TelaLogin> {
                   ),
                 ),
                 
-                // 8. ATUALIZAR CAMPO DE USUÁRIO PARA EMAIL
                 const SizedBox(height: 26),
                 TextField(
-                  controller: _emailController, // <- MUDADO
+                  controller: _emailController,
                   style: const TextStyle(color: Color(0xFFF2EBDF)),
-                  keyboardType: TextInputType.emailAddress, // Bônus
+                  keyboardType: TextInputType.emailAddress, 
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Email', // <- MUDADO
+                    labelText: 'Email',
                     labelStyle: TextStyle(
                       color: Color(0xFFF2EBDF),
                     ),
                   ),
                 ),
 
-                // Campo de Senha (continua igual)
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
@@ -155,13 +154,11 @@ class _TelaLoginState extends State<TelaLogin> {
                   ),
                 ),
 
-                // Botão de Entrar (MODIFICADO)
                 const SizedBox(height: 26),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    // 9. Desativa o botão se estiver carregando
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF307B8C),
@@ -169,7 +166,6 @@ class _TelaLoginState extends State<TelaLogin> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    // 10. Mostra 'loading' ou o texto
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
@@ -182,7 +178,6 @@ class _TelaLoginState extends State<TelaLogin> {
                   ),
                 ),
                 
-                // ... (Restante dos botões 'Esqueceu a Senha' e 'Registre-se' continuam iguais)
                 const SizedBox(height: 26),
                 TextButton(
                   onPressed: () {

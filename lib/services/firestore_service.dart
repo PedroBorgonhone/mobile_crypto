@@ -1,5 +1,3 @@
-// lib/services/firestore_service.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pedropaulo_cryptos/models/noticia.dart';
@@ -9,7 +7,6 @@ import 'package:pedropaulo_cryptos/models/prazo_indicador.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // --- MÉTODOS DE USUÁRIO (Criar, Ler, Atualizar) ---
   Future<void> saveUserData({
     required String uid,
     required String username,
@@ -66,10 +63,8 @@ class FirestoreService {
     }
   }
 
-  // --- NOVO MÉTODO (Excluir Dados do Usuário) ---
   Future<void> deleteUserData(String uid) async {
     try {
-      // Deleta o "documento" (pasta) do usuário e todos os seus dados
       await _db.collection('usuarios').doc(uid).delete();
     } catch (e) {
       print('Erro ao excluir dados do Firestore: $e');
@@ -77,7 +72,6 @@ class FirestoreService {
     }
   }
 
-  // --- MÉTODOS DA CARTEIRA ---
   Future<void> addAssetToCarteira({
     required String uid,
     required String assetSymbol,
@@ -109,8 +103,7 @@ class FirestoreService {
       throw Exception('Erro ao remover ativo da carteira.');
     }
   }
-  
-  // --- MÉTODOS DE NOTÍCIAS ---
+
   Future<void> seedNoticiasDatabase() async {
     final noticiasCollection = _db.collection('noticias_publicas');
     final noticiasLocais = NoticiaRepositorio.tabela;

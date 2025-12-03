@@ -1,16 +1,14 @@
-// lib/pages/tela_carteira_menu.dart
-
 import 'package:flutter/material.dart';
 import 'package:pedropaulo_cryptos/models/acao.dart';
 import 'package:pedropaulo_cryptos/models/moeda.dart';
 import 'package:pedropaulo_cryptos/repositories/acao_repositorio.dart';
 import 'package:pedropaulo_cryptos/repositories/moeda_repositorio.dart';
-// 1. IMPORTAR OS NOVOS SERVIÇOS E O SNACKBAR
 import 'package:pedropaulo_cryptos/services/firestore_service.dart';
-import 'package:pedropaulo_cryptos/pages/tela_login.dart'; // Para o showCustomSnackbar
+import 'package:pedropaulo_cryptos/pages/tela_login.dart';
+import 'package:pedropaulo_cryptos/services/coinmarketcap_service.dart';
+import 'package:pedropaulo_cryptos/services/alpha_vantage_service.dart';
 
 class TelaCarteira extends StatefulWidget {
-  // 2. RECEBER OS DADOS DO USUÁRIO DA MainTabNavigator
   final String uid;
   final Map<String, dynamic> userData;
 
@@ -26,85 +24,132 @@ class TelaCarteira extends StatefulWidget {
 
 class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
-  // Listas de todos os ativos disponíveis (como antes)
-  final List<Moeda> _moedasDisponiveis = MoedaRepositorio.tabela;
-  final List<Acao> _acoesDisponiveis = AcaoRepositorio.tabela;
 
-  // 3. NOVAS LISTAS (O ESTADO LOCAL DA CARTEIRA)
-  // Elas serão preenchidas com os dados do Firestore
-  late List<Moeda> _carteiraCripto;
-  late List<Acao> _carteiraAcoes;
+  final MoedaService _moedaService = MoedaService(); 
+  final AcaoService _acaoService = AcaoService();
 
-  // 4. INSTANCIAR O SERVIÇO DO FIRESTORE
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<Moeda> _moedasDisponiveisComPreco = [];
+  List<Acao> _acoesDisponiveisComPreco = [];
+
+  late List<Moeda> _carteiraCripto = [];
+  late List<Acao> _carteiraAcoes = [];
+
   final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
     super.initState();
+    
     _tabController = TabController(length: 2, vsync: this);
     
-    // 5. CARREGAR AS CARTEIRAS A PARTIR DOS DADOS RECEBIDOS
-    _loadCarteirasFromUserData();
-  }
+    _carteiraCripto = [];
+    _carteiraAcoes = [];
 
-  // 6. NOVA FUNÇÃO PARA PROCESSAR OS DADOS DO USUÁRIO
-  void _loadCarteirasFromUserData() {
-    // Pega as listas de SÍMBOLOS (Strings) do Firestore
-    // (Usa '?? []' para garantir que não seja nulo se o campo não existir)
-    // Usamos List.from para garantir que é uma lista modificável
-    final criptoSymbols = Set.from(List.from(widget.userData['carteiraCripto'] ?? []));
-    final acaoSymbols = Set.from(List.from(widget.userData['carteiraAcoes'] ?? []));
-
-    // Filtra as listas "master" para pegar os objetos completos
-    setState(() {
-      _carteiraCripto = _moedasDisponiveis
-          .where((moeda) => criptoSymbols.contains(moeda.sigla))
-          .toList();
-          
-      _carteiraAcoes = _acoesDisponiveis
-          .where((acao) => acaoSymbols.contains(acao.sigla))
-          .toList();
-    });
+    _loadInitialDataFromRepositories();
   }
   
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  void _updateCarteiraFromPrices() {
+  final criptoSymbols = Set.from(List.from(widget.userData['carteiraCripto'] ?? []));
+  final acaoSymbols = Set.from(List.from(widget.userData['carteiraAcoes'] ?? []));
 
-  // 7. ATUALIZAR FUNÇÃO DE REMOVER MOEDA
-  void _removerMoeda(Moeda moeda) async {
-    try {
-      // 7.1. Remove do Firestore
-      await _firestoreService.removeAssetFromCarteira(
-        uid: widget.uid,
-        assetSymbol: moeda.sigla,
-        type: 'cripto',
-      );
+  _carteiraCripto = _moedasDisponiveisComPreco
+      .where((moeda) => criptoSymbols.contains(moeda.sigla))
+      .toList();
       
-      // 7.2. Remove do estado local (para a tela atualizar)
-      setState(() {
-        _carteiraCripto.remove(moeda);
-        
-        // --- CORREÇÃO DE BUG ---
-        // Atualiza a lista do "Pai" (MainTabNavigator) para que
-        // ela não recrie a tela com a lista antiga.
-        (widget.userData['carteiraCripto'] as List).remove(moeda.sigla);
-        // -----------------------
-      });
+  _carteiraAcoes = _acoesDisponiveisComPreco
+      .where((acao) => acaoSymbols.contains(acao.sigla))
+      .toList();
+}
+  void _loadInitialDataFromRepositories() {
+  
+  final List<Moeda> moedasEstaticas = MoedaRepositorio.tabela;
+  final List<Acao> acoesEstaticas = AcaoRepositorio.tabela;
+  
+  final criptoSymbols = Set.from(List.from(widget.userData['carteiraCripto'] ?? []));
+  final acaoSymbols = Set.from(List.from(widget.userData['carteiraAcoes'] ?? []));
 
-      showCustomSnackbar(context, '${moeda.nome} removida da carteira.');
+  _moedasDisponiveisComPreco = moedasEstaticas;
+  _acoesDisponiveisComPreco = acoesEstaticas;
+
+  setState(() {
+    _carteiraCripto = _moedasDisponiveisComPreco
+        .where((moeda) => criptoSymbols.contains(moeda.sigla))
+        .toList();
+        
+    _carteiraAcoes = _acoesDisponiveisComPreco
+        .where((acao) => acaoSymbols.contains(acao.sigla))
+        .toList();
+  });
+}
+  
+  Future<void> _fetchAndRefreshPrices() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null; 
+    });
+
+    try {
+      final List<Moeda> moedasAtualizadas = await _moedaService.fetchCryptos();
+      final List<Acao> acoesAtualizadas = await _acaoService.fetchCurrentQuotes();
+
+      MoedaRepositorio.updatePrices(moedasAtualizadas);
+      AcaoRepositorio.updatePrices(acoesAtualizadas);
+      
+      _moedasDisponiveisComPreco = moedasAtualizadas;
+      _acoesDisponiveisComPreco = acoesAtualizadas;
+      
+      _updateCarteiraFromPrices();
+      
+      setState(() {
+        _updateCarteiraFromPrices();
+        _isLoading = false;
+      });
+      
     } catch (e) {
-      showCustomSnackbar(context, 'Erro ao remover moeda: $e', isError: true);
+      print('ERRO AO ATUALIZAR PREÇOS: $e');
+      
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Falha ao buscar preços. Verifique sua conexão ou API Keys.';
+        _carteiraCripto = [];
+        _carteiraAcoes = [];
+        _moedasDisponiveisComPreco = [];
+        _acoesDisponiveisComPreco = [];
+      });
     }
   }
 
-  // 8. ATUALIZAR FUNÇÃO DE ADICIONAR MOEDA
+@override
+void dispose() {
+   _tabController.dispose();
+  super.dispose();
+}
+
+void _removerMoeda(Moeda moeda) async {
+  try {
+    await _firestoreService.removeAssetFromCarteira(
+      uid: widget.uid,
+      assetSymbol: moeda.sigla,
+      type: 'cripto',
+     );
+      
+    setState(() {
+      _carteiraCripto.remove(moeda);
+      (widget.userData['carteiraCripto'] as List).remove(moeda.sigla);
+    });
+
+    showCustomSnackbar(context, '${moeda.nome} removida da carteira.');
+  } catch (e) {
+    showCustomSnackbar(context, 'Erro ao remover moeda: $e', isError: true);
+  }
+}
+
   void _mostrarDialogAdicionarMoeda() {
     final searchController = TextEditingController();
-    List<Moeda> moedasFiltradas = List.from(_moedasDisponiveis);
+    List<Moeda> moedasFiltradas = List.from(_moedasDisponiveisComPreco);
 
     showDialog(
       context: context,
@@ -114,9 +159,9 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
             void filtrar(String query) {
               setStateInDialog(() {
                 if (query.isEmpty) {
-                  moedasFiltradas = List.from(_moedasDisponiveis);
+                  moedasFiltradas = List.from(_moedasDisponiveisComPreco);
                 } else {
-                  moedasFiltradas = _moedasDisponiveis.where((moeda) {
+                  moedasFiltradas = _moedasDisponiveisComPreco.where((moeda) {
                     return moeda.nome.toLowerCase().contains(query.toLowerCase()) ||
                            moeda.sigla.toLowerCase().contains(query.toLowerCase());
                   }).toList();
@@ -146,7 +191,6 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                         itemCount: moedasFiltradas.length,
                         itemBuilder: (context, index) {
                           final moeda = moedasFiltradas[index];
-                          // 8.1. Verifica se já possui no ESTADO LOCAL
                           final jaPossui = _carteiraCripto.any((m) => m.sigla == moeda.sigla);
                           
                           return ListTile(
@@ -154,22 +198,17 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                             title: Text(moeda.nome),
                             subtitle: Text(moeda.sigla),
                             trailing: jaPossui ? const Icon(Icons.check, color: Colors.green) : const Icon(Icons.add),
-                            onTap: () async { // <-- MUDANÇA PARA ASYNC
+                            onTap: () async {
                               if (!jaPossui) {
                                 try {
-                                  // 8.2. Adiciona no FIRESTORE
                                   await _firestoreService.addAssetToCarteira(
                                     uid: widget.uid,
                                     assetSymbol: moeda.sigla,
                                     type: 'cripto',
                                   );
 
-                                  // 8.3. Adiciona no ESTADO LOCAL
                                   setState(() {
                                     _carteiraCripto.add(moeda);
-                                    
-                                    // --- CORREÇÃO DE BUG ---
-                                    // Atualiza a lista do "Pai" (MainTabNavigator)
                                     (widget.userData['carteiraCripto'] as List).add(moeda.sigla);
                                     // -----------------------
                                   });
@@ -202,7 +241,6 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
     );
   }
 
-  // 9. ATUALIZAR FUNÇÃO DE REMOVER AÇÃO
   void _removerAcao(Acao acao) async {
     try {
       await _firestoreService.removeAssetFromCarteira(
@@ -213,9 +251,6 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
       
       setState(() {
         _carteiraAcoes.remove(acao);
-        
-        // --- CORREÇÃO DE BUG ---
-        // Atualiza a lista do "Pai" (MainTabNavigator)
         (widget.userData['carteiraAcoes'] as List).remove(acao.sigla);
         // -----------------------
       });
@@ -226,10 +261,9 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
     }
   }
 
-  // 10. ATUALIZAR FUNÇÃO DE ADICIONAR AÇÃO
   void _mostrarDialogAdicionarAcao() {
     final searchController = TextEditingController();
-    List<Acao> acoesFiltradas = List.from(_acoesDisponiveis);
+    List<Acao> acoesFiltradas = List.from(_acoesDisponiveisComPreco);
 
     showDialog(
       context: context,
@@ -239,9 +273,9 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
             void filtrar(String query) {
               setStateInDialog(() {
                 if (query.isEmpty) {
-                  acoesFiltradas = List.from(_acoesDisponiveis);
+                  acoesFiltradas = List.from(_acoesDisponiveisComPreco);
                 } else {
-                  acoesFiltradas = _acoesDisponiveis.where((acao) {
+                  acoesFiltradas = _acoesDisponiveisComPreco.where((acao) {
                     return acao.nome.toLowerCase().contains(query.toLowerCase()) ||
                            acao.sigla.toLowerCase().contains(query.toLowerCase());
                   }).toList();
@@ -288,9 +322,6 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
 
                                   setState(() {
                                     _carteiraAcoes.add(acao);
-                                    
-                                    // --- CORREÇÃO DE BUG ---
-                                    // Atualiza a lista do "Pai" (MainTabNavigator)
                                     (widget.userData['carteiraAcoes'] as List).add(acao.sigla);
                                     // -----------------------
                                   });
@@ -325,14 +356,49 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+
+  if (_errorMessage != null) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 40),
+            const SizedBox(height: 10),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _fetchAndRefreshPrices,
+              child: const Text('Tentar Novamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
     return Scaffold(
       appBar: AppBar(
-        // ... (Seu AppBar continua 100% igual)
         title: const Text('Minhas Carteiras'),
         foregroundColor: Colors.white,
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        actions: [
+        IconButton(
+          icon: Icon(
+            _isLoading ? Icons.hourglass_top_outlined : Icons.refresh, 
+            color: Colors.white,
+          ),
+          tooltip: 'Atualizar Preços',
+          onPressed: _isLoading ? null : _fetchAndRefreshPrices,
+        ),
+      ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -347,7 +413,6 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
       body: TabBarView(
         controller: _tabController,
         children: [
-          // 11. PASSAR AS NOVAS LISTAS LOCAIS PARA OS MÉTODOS DE BUILD
           _buildCarteiraCripto(_carteiraCripto),
           _buildCarteiraAcoes(_carteiraAcoes),
         ],
@@ -355,8 +420,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
     );
   }
 
-  // 12. ATUALIZAR MÉTODO DE BUILD CRIPTO
-  Widget _buildCarteiraCripto(List<Moeda> carteira) { // Recebe a lista como parâmetro
+  Widget _buildCarteiraCripto(List<Moeda> carteira) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -365,7 +429,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
           ElevatedButton.icon(
             icon: const Icon(Icons.add),
             label: const Text('Adicionar Cripto'),
-            onPressed: _mostrarDialogAdicionarMoeda, // Função de adicionar
+            onPressed: _mostrarDialogAdicionarMoeda,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -381,7 +445,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: carteira.isEmpty // 12.1. Mostra msg se a carteira estiver vazia
+            child: carteira.isEmpty
               ? const Center(
                   child: Text(
                     'Sua carteira de criptos está vazia.\nClique em "Adicionar Cripto" para começar.',
@@ -390,10 +454,10 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                   ),
                 )
               : ListView.separated(
-                  itemCount: carteira.length, // Usa a lista do parâmetro
+                  itemCount: carteira.length,
                   separatorBuilder: (_, __) => const Divider(color: Colors.transparent, height: 8),
                   itemBuilder: (context, index) {
-                    final moeda = carteira[index]; // Usa a lista do parâmetro
+                    final moeda = carteira[index];
                     return Card(
                       color: const Color(0xFF003366),
                       child: ListTile(
@@ -414,7 +478,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                         trailing: IconButton(
                           icon: const Icon(Icons.close, color: Colors.redAccent),
                           tooltip: 'Remover da carteira',
-                          onPressed: () => _removerMoeda(moeda), // Função de remover
+                          onPressed: () => _removerMoeda(moeda),
                         ),
                       ),
                     );
@@ -426,8 +490,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
     );
   }
 
-  // 13. ATUALIZAR MÉTODO DE BUILD AÇÕES
-  Widget _buildCarteiraAcoes(List<Acao> carteira) { // Recebe a lista como parâmetro
+  Widget _buildCarteiraAcoes(List<Acao> carteira) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -436,7 +499,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
           ElevatedButton.icon(
             icon: const Icon(Icons.add),
             label: const Text('Adicionar Ação'),
-            onPressed: _mostrarDialogAdicionarAcao, // Função de adicionar
+            onPressed: _mostrarDialogAdicionarAcao,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -452,7 +515,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: carteira.isEmpty // 13.1. Mostra msg se a carteira estiver vazia
+            child: carteira.isEmpty
               ? const Center(
                   child: Text(
                     'Sua carteira de ações está vazia.\nClique em "Adicionar Ação" para começar.',
@@ -461,10 +524,10 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                   ),
                 )
               : ListView.separated(
-                  itemCount: carteira.length, // Usa a lista do parâmetro
+                  itemCount: carteira.length,
                   separatorBuilder: (_, __) => const Divider(color: Colors.transparent, height: 8),
                   itemBuilder: (context, index) {
-                    final acao = carteira[index]; // Usa a lista do parâmetro
+                    final acao = carteira[index];
                     return Card(
                       color: const Color(0xFF003366),
                       child: ListTile(
@@ -484,7 +547,7 @@ class _TelaCarteiraState extends State<TelaCarteira> with SingleTickerProviderSt
                         trailing: IconButton(
                           icon: const Icon(Icons.close, color: Colors.redAccent),
                           tooltip: 'Remover da carteira',
-                          onPressed: () => _removerAcao(acao), // Função de remover
+                          onPressed: () => _removerAcao(acao),
                         ),
                       ),
                     );

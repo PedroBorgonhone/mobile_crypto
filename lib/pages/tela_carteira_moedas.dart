@@ -3,6 +3,7 @@ import 'package:pedropaulo_cryptos/models/moeda.dart';
 import 'package:pedropaulo_cryptos/models/opcoes_sort.dart';
 import 'package:pedropaulo_cryptos/repositories/moeda_repositorio.dart';
 import 'package:pedropaulo_cryptos/repositories/ordenador_moedas.dart';
+import 'package:pedropaulo_cryptos/services/coinmarketcap_service.dart';
 
 class CarteiraMoedas extends StatefulWidget {
   const CarteiraMoedas({super.key});
@@ -12,14 +13,29 @@ class CarteiraMoedas extends StatefulWidget {
 }
 
 class _CarteiraMoedasState extends State<CarteiraMoedas> {
+  final MoedaService _moedaService = MoedaService();
+
   late List<Moeda> tabela;
   SortOptions _currentSortOption = SortOptions.porPrecoDecrescente;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     tabela = MoedaRepositorio.tabela;
-    _sortList();
+    _loadAllMoedas();
+  }
+
+  void _loadAllMoedas() async {
+    setState(() => _isLoading = true);
+    try {
+      tabela = await _moedaService.fetchCryptos();
+      _sortList();
+    } catch (e) {
+      print("Erro ao carregar lista de moedas na CarteiraMoedas: $e");
+      tabela = []; 
+    }
+    setState(() => _isLoading = false);
   }
 
   void _sortList({SortOptions? newSortOption}) {
@@ -62,20 +78,22 @@ class _CarteiraMoedasState extends State<CarteiraMoedas> {
           )
         ],
       ),
-      body: ListView.separated(
-        itemBuilder: (BuildContext context, int index) {
-          final moeda = tabela[index];
-          return ListTile(
-            leading: Image.asset(moeda.icone, width: 40),
-            title: Text(moeda.nome),
-            subtitle: Text(moeda.sigla),
-            trailing: Text('R\$ ${moeda.preco.toStringAsFixed(2)}'),
-          );
-        },
-        padding: const EdgeInsets.all(16),
-        separatorBuilder: (_, __) => const Divider(),
-        itemCount: tabela.length,
-      ),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : ListView.separated(
+            itemBuilder: (BuildContext context, int index) {
+              final moeda = tabela[index];
+              return ListTile(
+                leading: Image.asset(moeda.icone, width: 40),
+                title: Text(moeda.nome),
+                subtitle: Text(moeda.sigla),
+                trailing: Text('R\$ ${moeda.preco.toStringAsFixed(2)}'),
+              );
+            },
+            padding: const EdgeInsets.all(16),
+            separatorBuilder: (_, __) => const Divider(),
+            itemCount: tabela.length,
+          ),
     );
   }
 }

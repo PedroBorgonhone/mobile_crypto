@@ -9,6 +9,7 @@ import 'package:pedropaulo_cryptos/pages/tela_perfil.dart';
 import 'package:pedropaulo_cryptos/pages/tela_login.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pedropaulo_cryptos/repositories/usuario_repositorio.dart';
 import 'package:pedropaulo_cryptos/services/auth_service.dart';
 import 'package:pedropaulo_cryptos/services/firestore_service.dart';
 
@@ -39,8 +40,9 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
     );
     _loadUserData();
   }
+  
+  final UsuarioRepositorio _usuarioRepositorio = UsuarioRepositorio(); // <-- NOVO
 
-  // ESTA É A FUNÇÃO QUE QUEREMOS CHAMAR DE NOVO
   Future<void> _loadUserData() async {
     // Garante que a tela saiba que estamos carregando
     setState(() => _isLoading = true);
@@ -48,22 +50,32 @@ class _MainTabNavigatorState extends State<MainTabNavigator> with TickerProvider
     _authUser = _authService.currentUser;
 
     if (_authUser == null) {
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const TelaLogin()),
-          (route) => false,
-        );
-      }
-      return;
+        // ... (código de retorno ao login)
+        return;
     }
     
     try {
-      _userData = await _firestoreService.getUserData(_authUser!.uid);
-      if (_userData == null) {
-        print("Erro: Usuário não encontrado no Firestore.");
-      }
+        _userData = await _firestoreService.getUserData(_authUser!.uid);
+        
+        // --- NOVO PASSO: SINCRONIZAR DADOS MOCKADOS E FOTO ---
+        if (_userData != null) {
+            // 1. Garante que o usuário existe no H2 (necessário para a foto)
+            _usuarioRepositorio.addUserLoginInfo(
+                email: _userData!['email'], 
+                username: _userData!['username'],
+            );
+            
+            // 2. LÊ A FOTO SALVA NO REPOSITÓRIO/H2 E ADICIONA AO MAPA DO FIREBASE (userData)
+            final usuarioMock = _usuarioRepositorio.encontraUsuario(_userData!['email']);
+            
+            if (usuarioMock != null && usuarioMock.profileImagePath != null) {
+                // Adiciona o caminho da foto do H2 (Repositório) ao mapa de dados do Firebase
+                _userData!['profileImagePath'] = usuarioMock.profileImagePath;
+            }
+        }
+        // ... (resto do try-catch)
     } catch (e) {
-      print("Erro ao carregar dados do usuário: $e");
+        print("Erro ao carregar dados do usuário: $e");
     }
 
     // Avisa à tela que paramos de carregar
